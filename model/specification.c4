@@ -1,0 +1,16 @@
+specification {
+  element person {
+    style {
+      shape person
+    }
+  }
+  element softwareSystem
+  element container
+  element component
+
+  relationship async {
+    line dashed
+  }
+
+  tag external
+}

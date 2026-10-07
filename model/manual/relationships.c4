@@ -1,0 +1,4 @@
+// Hand-authored, cross-cutting relationships not implied by any single
+// code annotation. The likec4-sync skill never writes to this file.
+model {
+}

@@ -1,0 +1,13 @@
+model {
+  fulfillment-queue = softwareSystem 'Fulfillment Queue' {
+    #external
+    description 'Third-party managed message queue used to notify downstream fulfillment systems. No annotated code in this repo owns it.'
+    technology 'Amazon SQS'
+  }
+
+  stripe-api = softwareSystem 'Stripe API' {
+    #external
+    description 'Third-party payment processor. No annotated code in this repo owns it.'
+    technology 'HTTPS/REST'
+  }
+}
