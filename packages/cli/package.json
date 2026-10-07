@@ -1,0 +1,44 @@
+{
+  "name": "likec4-agent",
+  "version": "0.1.0",
+  "description": "Deterministic CLI that syncs a LikeC4 architecture model from @likec4 / @likec4-rel code annotations",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "likec4-agent": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --target node20 --clean --out-dir dist --shims",
+    "dev": "tsup src/index.ts --format esm --target node20 --out-dir dist --shims --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "fast-glob": "^3.3.2",
+    "ignore": "^5.3.1"
+  },
+  "peerDependencies": {
+    "likec4": "^1.59.0"
+  },
+  "peerDependenciesMeta": {
+    "likec4": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "likec4": "^1.59.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

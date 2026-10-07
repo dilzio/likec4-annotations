@@ -2,7 +2,7 @@
  * Accepts incoming order requests, validates them, charges the
  * customer, and publishes a fulfillment event once payment succeeds.
  *
- * @likec4 container orders-service "Orders Service" technology:"Node.js, Express"
+ * @likec4 container orders-service "Orders Service Updated2" technology:"Node.js, Express"
  * @likec4-rel payments-service "charges the customer's card" technology:"REST/HTTPS"
  * @likec4-rel fulfillment-queue "publishes OrderPlaced event" technology:"SQS" kind:async
  */

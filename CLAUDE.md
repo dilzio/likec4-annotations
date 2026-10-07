@@ -1,9 +1,13 @@
 # like-c4-agent
 
-## LikeC4 architecture model
+This repo is the home of **likec4-agent**: a deterministic CLI
+(`packages/cli`) plus a thin Claude Code plugin wrapper
+(`packages/claude-plugin`) that sync a [LikeC4](https://likec4.dev)
+architecture model from `@likec4`/`@likec4-rel` tags embedded in code doc
+comments. The tag grammar is bundled with the CLI
+(`packages/cli/docs/likec4-annotations.md`), not a per-repo editable file.
 
-This repo keeps a [LikeC4](https://likec4.dev) model in `model/` in sync with
-the code via `@likec4` / `@likec4-rel` tags embedded in doc comments. See
-`docs/likec4-annotations.md` for the tag grammar, and run the `/likec4-sync`
-command (`.claude/skills/likec4-sync/SKILL.md`) to regenerate
-`model/generated/*.c4` after annotating code.
+`demo/` is a worked example consuming the CLI like any real project would
+— it is not part of the published package, and doubles as this repo's
+end-to-end smoke test. See the root `README.md` for the full monorepo
+layout and how to run things.

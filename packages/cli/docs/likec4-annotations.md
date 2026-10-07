@@ -1,10 +1,14 @@
 # `@likec4` Annotation Convention
 
-This repo keeps its [LikeC4](https://likec4.dev) architecture model in sync with
-the code by reading tags embedded in existing doc comments. Run the
-`/likec4-sync` command (see `.claude/skills/likec4-sync/SKILL.md`) to regenerate
-`model/generated/elements.c4` and `model/generated/relationships.c4` from these
-tags.
+This grammar is bundled with — and fixed by — your installed version of the
+`likec4-agent` CLI. It is **not** a per-repo editable file: every repo using
+a given `likec4-agent` version gets the exact same tag vocabulary. If you
+need new fields or kinds, request them upstream rather than hand-editing a
+local copy of this document (there isn't one to edit — this copy ships
+inside `node_modules/likec4-agent/docs/`).
+
+Run `likec4-agent sync` to regenerate `model/generated/elements.c4` and
+`model/generated/relationships.c4` from these tags.
 
 ## Grammar
 
@@ -13,25 +17,27 @@ tags.
 @likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>]
 ```
 
-- `<kind>` must be one declared in `model/specification.c4` (currently `person`,
-  `softwareSystem`, `container`, `component`).
+- `<kind>` must be one declared in your repo's `model/specification.c4`
+  (e.g. `person`, `softwareSystem`, `container`, `component` — whatever
+  your project declares).
 - `<id>` and `<targetId>` follow LikeC4 identifier rules: letters, digits,
   hyphens, and underscores; no leading digit, no periods.
 - `<title>` is optional; if omitted, the id is used as the title.
 - `technology:"..."` is optional on both tags.
-- `kind:<relKind>` is optional on `@likec4-rel` and must be a relationship kind
-  declared in `model/specification.c4` (currently `async`). Omit it for a plain
+- `kind:<relKind>` is optional on `@likec4-rel` and must be a relationship
+  kind declared in `model/specification.c4`. Omit it for a plain
   relationship.
-- The element's `description` is **not** a separate tag — it is taken verbatim
-  from the prose of the same doc comment, above the tags.
-- Every `@likec4-rel` line attaches to the nearest preceding `@likec4` tag in
-  the **same comment block**. One block declares exactly one element and zero
-  or more outgoing relationships from it. Attaching a relationship to an
-  element declared in a different file/block is out of scope for v1.
+- The element's `description` is **not** a separate tag — it is taken
+  verbatim from the prose of the same doc comment, above the tags.
+- Every `@likec4-rel` line attaches to the nearest preceding `@likec4` tag
+  in the **same comment block**. One block declares exactly one element and
+  zero or more outgoing relationships from it. Attaching a relationship to
+  an element declared in a different file/block is out of scope for v1.
 
 The tag syntax itself is independent of comment delimiters (`/** */`, `#`,
-`//`) — the sync skill matches on the literal strings `@likec4` / `@likec4-rel`
-wherever they appear, so the same grammar works across languages.
+`//`, `"""`) — `likec4-agent` matches on the literal strings `@likec4` /
+`@likec4-rel` wherever they appear, so the same grammar works across
+languages.
 
 ## Examples
 
@@ -64,8 +70,8 @@ model {
 
 ```
 model {
-  orders-service -> payments-service "charges the customer's card" 'REST/HTTPS' // examples/annotated/orders-service.ts:6
-  orders-service -[async]-> fulfillment-queue "publishes OrderPlaced event" 'SQS' // examples/annotated/orders-service.ts:7
+  orders-service -> payments-service "charges the customer's card" 'REST/HTTPS' // src/orders-service.ts:6
+  orders-service -[async]-> fulfillment-queue "publishes OrderPlaced event" 'SQS' // src/orders-service.ts:7
 }
 ```
 
@@ -91,20 +97,21 @@ def handle_webhook(payload: dict) -> None:
 func NewStripeClient() *Client { ... }
 ```
 
-Here `stripe-api` has no annotated code backing it — it would be declared by
-hand in `model/manual/external-systems.c4` as a `softwareSystem` tagged
-`#external`. The sync skill resolves the relationship target against the full
-model but never writes the element itself.
+Here `stripe-api` has no annotated code backing it — it would be declared
+by hand in `model/manual/external-systems.c4` as a `softwareSystem` tagged
+`#external`. `likec4-agent` resolves the relationship target against the
+full model but never writes the element itself.
 
 ## Generated vs. hand-authored files
 
 | Path | Owner | Notes |
 |---|---|---|
-| `model/generated/elements.c4` | `likec4-sync` skill | Fully rewritten every run |
-| `model/generated/relationships.c4` | `likec4-sync` skill | Fully rewritten every run |
+| `model/generated/elements.c4` | `likec4-agent sync` | Fully rewritten every run |
+| `model/generated/relationships.c4` | `likec4-agent sync` | Fully rewritten every run |
 | `model/manual/**` | You | External systems/actors and relationships with no single owning annotation |
 | `model/views/**` | You | All `view { ... }` definitions |
 | `model/specification.c4` | You | Element/relationship kinds, tags, styles |
 
-The skill only ever writes inside `model/generated/**`. It reads the rest of
-`model/**.c4` to resolve relationship target ids, but never modifies it.
+`likec4-agent sync` only ever writes inside `model/generated/**`. It reads
+the rest of `model/**.c4` to resolve relationship target ids and validate
+declared kinds, but never modifies it.

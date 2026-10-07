@@ -1,0 +1,19 @@
+{
+  "name": "likec4-agent-marketplace",
+  "owner": {
+    "name": "<TODO: consulting company name>",
+    "email": "matt.clarkson@txidigital.com"
+  },
+  "metadata": {
+    "description": "Internal marketplace for the likec4-agent Claude Code plugin",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "likec4-agent",
+      "source": "./packages/claude-plugin",
+      "description": "Sync a LikeC4 architecture model from @likec4 code annotations",
+      "version": "0.1.0"
+    }
+  ]
+}

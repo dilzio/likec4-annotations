@@ -1,0 +1,18 @@
+{
+  "name": "likec4-agent-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Worked example consuming the likec4-agent CLI end to end",
+  "scripts": {
+    "likec4:dev": "likec4 start",
+    "likec4:build": "likec4 build -o ./dist/likec4",
+    "likec4:validate": "likec4 validate",
+    "likec4:sync": "likec4-agent sync"
+  },
+  "devDependencies": {
+    "likec4": "^1.59.0"
+  },
+  "dependencies": {
+    "likec4-agent": "^0.1.0"
+  }
+}

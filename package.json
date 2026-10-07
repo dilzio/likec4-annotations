@@ -2,13 +2,9 @@
   "name": "like-c4-agent",
   "version": "0.1.0",
   "private": true,
-  "description": "AI-annotation-driven LikeC4 architecture model generation",
-  "scripts": {
-    "likec4:dev": "likec4 start",
-    "likec4:build": "likec4 build -o ./dist/likec4",
-    "likec4:validate": "likec4 validate"
-  },
-  "devDependencies": {
-    "likec4": "^1.59.0"
-  }
+  "description": "likec4-agent: sync a LikeC4 architecture model from @likec4 code annotations",
+  "workspaces": [
+    "packages/*",
+    "demo"
+  ]
 }
