@@ -1,6 +1,6 @@
 export const GRAMMAR_SUMMARY = `
 @likec4 <kind> <id> ["<title>"] [technology:"<tech>"]
-@likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>]
+@likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>] [flow:"<flowId>":<step>] [flowTitle:"<title>"]
 
 See docs/likec4-annotations.md (bundled with this CLI) for the full grammar.
 `.trim();
@@ -21,6 +21,8 @@ export const REL_TAG_HEAD_RE = new RegExp(
 
 export const REL_TECH_RE = /technology:"((?:[^"\\]|\\.)*)"/;
 export const REL_KIND_RE = /kind:([A-Za-z][A-Za-z0-9_-]*)/;
+export const REL_FLOW_RE = new RegExp(`flow:"(${ID_PATTERN})":(\\d+)`);
+export const REL_FLOWTITLE_RE = /flowTitle:"((?:[^"\\]|\\.)*)"/;
 
 export function unescapeQuoted(value: string): string {
   return value.replace(/\\(.)/g, "$1");

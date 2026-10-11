@@ -14,6 +14,9 @@ export interface ParsedRelationship {
   label: string;
   technology?: string;
   kind?: string;
+  flow?: string;
+  step?: number;
+  flowTitle?: string;
   sourceFile: string;
   sourceLine: number;
 }
@@ -63,6 +66,7 @@ export interface SyncReport {
     }>;
     removed: Array<{ source: string; target: string; label: string }>;
   };
+  flows: Array<{ id: string; title: string; stepCount: number }>;
   issues: {
     danglingTargets: Array<{
       source: string;
@@ -79,10 +83,12 @@ export interface SyncReport {
       context: "element" | "relationship";
     }>;
     malformedTags: MalformedTag[];
+    flowWarnings: Array<{ flowId: string; message: string }>;
   };
   write: {
     elementsFile: string;
     relationshipsFile: string;
+    flowsFile: string;
     changed: boolean;
   };
   validate: {

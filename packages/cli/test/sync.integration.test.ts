@@ -123,4 +123,38 @@ describe("runSync integration", () => {
     expect(report.issues.danglingTargets[0].target).toBe("nonexistent-service");
     expect(report.relationships.added).toHaveLength(0);
   });
+
+  it("generates model/generated/flows.c4 for a tagged flow and reports it", async () => {
+    write(
+      "src/orders.ts",
+      ORDERS_SOURCE.replace(
+        '@likec4-rel stripe-api "charges the card"',
+        '@likec4-rel stripe-api "charges the card" flow:"checkout":1 flowTitle:"Checkout Flow"',
+      ),
+    );
+    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
+
+    expect(report.flows).toEqual([{ id: "checkout", title: "Checkout Flow", stepCount: 1 }]);
+    const flowsContent = readFileSync(join(dir, "model/generated/flows.c4"), "utf8");
+    expect(flowsContent).toContain("dynamic view checkout {");
+    expect(flowsContent).toContain("title 'Checkout Flow'");
+    expect(flowsContent).toContain("orders-service -> stripe-api 'charges the card'");
+  });
+
+  it("drops a flow entirely when its only tagged relationship is excluded upstream", async () => {
+    write(
+      "src/orders.ts",
+      ORDERS_SOURCE.replace(
+        '@likec4-rel stripe-api "charges the card"',
+        '@likec4-rel nonexistent-service "charges the card" flow:"checkout":1',
+      ),
+    );
+    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
+
+    expect(report.flows).toHaveLength(0);
+    const flowsContent = readFileSync(join(dir, "model/generated/flows.c4"), "utf8");
+    expect(flowsContent).not.toContain("dynamic view");
+  });
 });

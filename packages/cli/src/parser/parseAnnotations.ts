@@ -2,6 +2,8 @@ import type { CommentBlock } from "./commentBlocks.js";
 import type { MalformedTag, ParsedElement, ParsedRelationship } from "../types.js";
 import {
   ELEMENT_TAG_RE,
+  REL_FLOW_RE,
+  REL_FLOWTITLE_RE,
   REL_KIND_RE,
   REL_TAG_HEAD_RE,
   REL_TECH_RE,
@@ -60,6 +62,10 @@ export function parseCommentBlock(block: CommentBlock, sourceFile: string): Pars
       if (techMatch) remainder = remainder.replace(REL_TECH_RE, "");
       const kindMatch = REL_KIND_RE.exec(remainder);
       if (kindMatch) remainder = remainder.replace(REL_KIND_RE, "");
+      const flowMatch = REL_FLOW_RE.exec(remainder);
+      if (flowMatch) remainder = remainder.replace(REL_FLOW_RE, "");
+      const flowTitleMatch = REL_FLOWTITLE_RE.exec(remainder);
+      if (flowTitleMatch) remainder = remainder.replace(REL_FLOWTITLE_RE, "");
       if (remainder.trim().length > 0) {
         malformed.push({ sourceFile, sourceLine: line.lineNumber, rawText: line.text });
         continue;
@@ -70,6 +76,9 @@ export function parseCommentBlock(block: CommentBlock, sourceFile: string): Pars
         label: unescapeQuoted(label),
         technology: techMatch ? unescapeQuoted(techMatch[1]) : undefined,
         kind: kindMatch ? kindMatch[1] : undefined,
+        flow: flowMatch ? flowMatch[1] : undefined,
+        step: flowMatch ? Number(flowMatch[2]) : undefined,
+        flowTitle: flowTitleMatch ? unescapeQuoted(flowTitleMatch[1]) : undefined,
         sourceFile,
         sourceLine: line.lineNumber,
       });

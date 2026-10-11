@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { emitElements } from "../src/emit/elements.js";
 import { emitRelationships } from "../src/emit/relationships.js";
+import { emitFlows } from "../src/emit/flows.js";
+import type { Flow } from "../src/model/flows.js";
 import type { ParsedElement, ParsedRelationship } from "../src/types.js";
 
 describe("emitElements", () => {
@@ -83,5 +85,56 @@ describe("emitRelationships", () => {
       { source: "a", target: "b", label: "calls", sourceFile: "f.ts", sourceLine: 1 },
     ]);
     expect(output).toContain('a -> b "calls" // f.ts:1');
+  });
+});
+
+describe("emitFlows", () => {
+  const checkoutFlow: Flow = {
+    id: "checkout",
+    title: "Checkout Flow",
+    steps: [
+      {
+        source: "orders-service",
+        target: "payments-service",
+        label: "charges the customer's card",
+        sourceFile: "src/orders.ts",
+        sourceLine: 6,
+      },
+      {
+        source: "payments-service",
+        target: "stripe-api",
+        label: "charges card",
+        sourceFile: "src/payments.ts",
+        sourceLine: 6,
+      },
+    ],
+  };
+
+  it("emits a dynamic view block with single-quoted title and step labels", () => {
+    const output = emitFlows([checkoutFlow]);
+    expect(output).toContain("views {");
+    expect(output).toContain("dynamic view checkout {");
+    expect(output).toContain("title 'Checkout Flow'");
+    expect(output).toContain(
+      "orders-service -> payments-service 'charges the customer\\'s card' // src/orders.ts:6",
+    );
+    expect(output).toContain(
+      "payments-service -> stripe-api 'charges card' // src/payments.ts:6",
+    );
+  });
+
+  it("escapes an apostrophe in a step label correctly", () => {
+    const output = emitFlows([checkoutFlow]);
+    expect(output).toContain("charges the customer\\'s card");
+  });
+
+  it("never emits a dynamic view block for a flow with zero steps", () => {
+    const emptyFlow: Flow = { id: "checkout", title: "Checkout Flow", steps: [] };
+    const output = emitFlows([emptyFlow]);
+    expect(output).not.toContain("dynamic view");
+  });
+
+  it("is idempotent — identical input produces identical output", () => {
+    expect(emitFlows([checkoutFlow])).toBe(emitFlows([checkoutFlow]));
   });
 });

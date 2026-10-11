@@ -3,8 +3,8 @@
  * customer, and publishes a fulfillment event once payment succeeds.
  *
  * @likec4 container orders-service "Orders Service Updated2" technology:"Node.js, Express"
- * @likec4-rel payments-service "charges the customer's card" technology:"REST/HTTPS"
- * @likec4-rel fulfillment-queue "publishes OrderPlaced event" technology:"SQS" kind:async
+ * @likec4-rel payments-service "charges the customer's card" technology:"REST/HTTPS" flow:"checkout":1 flowTitle:"Checkout Flow"
+ * @likec4-rel fulfillment-queue "publishes OrderPlaced event" technology:"SQS" kind:async flow:"checkout":3
  */
 export class OrdersService {
   async placeOrder(order: { id: string; customerId: string; total: number }) {

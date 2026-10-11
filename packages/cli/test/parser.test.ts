@@ -131,4 +131,53 @@ export function noop() {}
 `;
     expect(extractCommentBlocks(source)).toHaveLength(0);
   });
+
+  it("parses flow and flowTitle params on a relationship", () => {
+    const source = `/**
+ * @likec4 container orders-service "Orders Service"
+ * @likec4-rel payments-service "charges the customer's card" flow:"checkout":2 flowTitle:"Checkout Flow"
+ */
+`;
+    const blocks = extractCommentBlocks(source);
+    const parsed = parseCommentBlock(blocks[0], "flow.ts");
+    expect(parsed.malformed).toHaveLength(0);
+    expect(parsed.relationships).toHaveLength(1);
+    expect(parsed.relationships[0]).toMatchObject({
+      flow: "checkout",
+      step: 2,
+      flowTitle: "Checkout Flow",
+    });
+  });
+
+  it("flags a malformed flow param (non-numeric step) as a malformed tag", () => {
+    const source = `/**
+ * @likec4 container orders-service "Orders Service"
+ * @likec4-rel payments-service "charges the card" flow:"checkout":two
+ */
+`;
+    const blocks = extractCommentBlocks(source);
+    const parsed = parseCommentBlock(blocks[0], "bad-flow.ts");
+    expect(parsed.relationships).toHaveLength(0);
+    expect(parsed.malformed).toHaveLength(1);
+  });
+
+  it("flags a relationship with two flow params as a malformed tag", () => {
+    const source = `/**
+ * @likec4 container orders-service "Orders Service"
+ * @likec4-rel payments-service "charges the card" flow:"checkout":1 flow:"other":2
+ */
+`;
+    const blocks = extractCommentBlocks(source);
+    const parsed = parseCommentBlock(blocks[0], "dupe-flow.ts");
+    expect(parsed.relationships).toHaveLength(0);
+    expect(parsed.malformed).toHaveLength(1);
+  });
+
+  it("parses a relationship with no flow param identically to before (regression)", () => {
+    const blocks = extractCommentBlocks(JSDOC_SOURCE);
+    const parsed = parseCommentBlock(blocks[0], "orders-service.ts");
+    expect(parsed.relationships[0].flow).toBeUndefined();
+    expect(parsed.relationships[0].step).toBeUndefined();
+    expect(parsed.relationships[0].flowTitle).toBeUndefined();
+  });
 });

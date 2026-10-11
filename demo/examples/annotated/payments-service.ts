@@ -3,7 +3,7 @@
  * the resulting transaction.
  *
  * @likec4 container payments-service "Payments Service" technology:"Node.js, Express"
- * @likec4-rel stripe-api "charges card" technology:"HTTPS/REST"
+ * @likec4-rel stripe-api "charges card" technology:"HTTPS/REST" flow:"checkout":2
  */
 export class PaymentsService {
   async charge(customerId: string, amountCents: number) {

@@ -46,6 +46,24 @@ export function formatHuman(report: SyncReport): string {
   }
   lines.push("");
 
+  lines.push("**Flows (dynamic views) generated:**");
+  if (report.flows.length === 0) {
+    lines.push("none");
+  } else {
+    for (const f of report.flows) {
+      lines.push(`- ${f.id} ("${f.title}") — ${f.stepCount} step(s)`);
+    }
+  }
+  lines.push("");
+
+  if (report.issues.flowWarnings.length > 0) {
+    lines.push("**Flow warnings:**");
+    for (const w of report.issues.flowWarnings) {
+      lines.push(`- ${w.flowId}: ${w.message}`);
+    }
+    lines.push("");
+  }
+
   lines.push("**Dangling relationship targets (omitted):**");
   if (report.issues.danglingTargets.length === 0) {
     lines.push("none");

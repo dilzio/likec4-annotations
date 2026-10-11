@@ -1,5 +1,6 @@
 import type { ParsedElement, ParsedRelationship, SyncReport } from "../types.js";
 import type { ResolveResult } from "../model/resolve.js";
+import type { Flow, FlowWarning } from "../model/flows.js";
 import type { PreviousElement, PreviousRelationship } from "../diff/previousGenerated.js";
 import { relationshipKey } from "../diff/previousGenerated.js";
 import type { ValidateResult } from "../validate/runLikeC4Validate.js";
@@ -12,10 +13,13 @@ export interface BuildReportInput {
   filesWithAnnotations: number;
   resolved: ResolveResult;
   malformedTags: MalformedTag[];
+  flows: Flow[];
+  flowWarnings: FlowWarning[];
   previousElements: PreviousElement[];
   previousRelationships: PreviousRelationship[];
   elementsFile: string;
   relationshipsFile: string;
+  flowsFile: string;
   changed: boolean;
   validate: ValidateResult;
   manualDirConfirmed: boolean;
@@ -76,14 +80,19 @@ export function buildReport(input: BuildReportInput): SyncReport {
         label: r.label,
       })),
     },
+    flows: input.flows
+      .filter((f) => f.steps.length > 0)
+      .map((f) => ({ id: f.id, title: f.title, stepCount: f.steps.length })),
     issues: {
       danglingTargets: resolved.danglingTargets,
       undeclaredKinds: resolved.undeclaredKinds,
       malformedTags: input.malformedTags,
+      flowWarnings: input.flowWarnings,
     },
     write: {
       elementsFile: input.elementsFile,
       relationshipsFile: input.relationshipsFile,
+      flowsFile: input.flowsFile,
       changed: input.changed,
     },
     validate: input.validate,
