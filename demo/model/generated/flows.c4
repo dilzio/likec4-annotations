@@ -7,5 +7,6 @@ views {
     orders-service -> payments-service 'charges the customer\'s card' // examples/annotated/orders-service.ts:6
     payments-service -> stripe-api 'charges card' // examples/annotated/payments-service.ts:6
     orders-service -> fulfillment-queue 'publishes OrderPlaced event' // examples/annotated/orders-service.ts:7
+    payments-service -> logging-service 'log the payment' // examples/annotated/payments-service.ts:7
   }
 }

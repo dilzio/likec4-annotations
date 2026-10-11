@@ -4,6 +4,7 @@
  *
  * @likec4 container payments-service "Payments Service" technology:"Node.js, Express"
  * @likec4-rel stripe-api "charges card" technology:"HTTPS/REST" flow:"checkout":2
+ * @likec4-rel logging-service "log the payment" technology:"GRPC" flow:"checkout":4
  */
 export class PaymentsService {
   async charge(customerId: string, amountCents: number) {

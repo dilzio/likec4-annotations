@@ -3,5 +3,6 @@
 model {
   orders-service -[async]-> fulfillment-queue "publishes OrderPlaced event" 'SQS' // examples/annotated/orders-service.ts:7
   orders-service -> payments-service "charges the customer's card" 'REST/HTTPS' // examples/annotated/orders-service.ts:6
+  payments-service -> logging-service "log the payment" 'GRPC' // examples/annotated/payments-service.ts:7
   payments-service -> stripe-api "charges card" 'HTTPS/REST' // examples/annotated/payments-service.ts:6
 }
