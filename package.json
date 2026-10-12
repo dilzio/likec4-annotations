@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "description": "likec4-agent: sync a LikeC4 architecture model from @likec4 code annotations",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dilzio/likec4-annotations.git"
+  },
   "workspaces": [
     "packages/*",
     "demo"

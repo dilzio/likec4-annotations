@@ -8,6 +8,6 @@ comments. The tag grammar is bundled with the CLI
 (`packages/cli/docs/likec4-annotations.md`), not a per-repo editable file.
 
 `demo/` is a worked example consuming the CLI like any real project would
-— it is not part of the published package, and doubles as this repo's
-end-to-end smoke test. See the root `README.md` for the full monorepo
-layout and how to run things.
+— it is not distributed with the CLI (which ships via git, not a registry
+publish), and doubles as this repo's end-to-end smoke test. See the root
+`README.md` for the full monorepo layout and how to run things.
