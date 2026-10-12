@@ -124,6 +124,27 @@ npm run likec4:validate --workspace demo   # should report the demo model as val
 
 ## Usage
 
+### 0. Bootstrapping an unannotated codebase
+
+Starting from a codebase with no (or only partial) `@likec4` tags? Use the
+interactive `likec4-annotate` Claude Code skill instead of hand-writing every
+tag yourself: it scans the target codebase, proposes a chunk plan and a
+`model/specification.c4` taxonomy, then walks through each chunk proposing
+`@likec4`/`@likec4-rel` tags (and, once every chunk is tagged, `flow:`/
+`flowTitle:` tags) for your explicit approval before writing anything. A
+resumable on-disk progress manifest (`<model-dir>/.annotate/progress.json`)
+lets a large codebase be annotated across multiple sessions.
+
+```
+/likec4-annotate
+```
+
+It never runs `likec4-agent sync` itself and never touches
+`<model-dir>/generated/**` — once it's done proposing and writing tags,
+continue with step 2 below to turn them into the model. See
+[`packages/claude-plugin/skills/likec4-annotate/SKILL.md`](packages/claude-plugin/skills/likec4-annotate/SKILL.md)
+for the full staged workflow.
+
 ### 1. Annotate your code
 
 Add `@likec4` / `@likec4-rel` tags inside a doc comment near the code that
