@@ -1,9 +1,15 @@
 {
   "name": "likec4-agent",
   "version": "0.1.0",
+  "private": true,
   "description": "Deterministic CLI that syncs a LikeC4 architecture model from @likec4 / @likec4-rel code annotations",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dilzio/likec4-annotations.git",
+    "directory": "packages/cli"
+  },
   "engines": {
     "node": ">=20"
   },
@@ -17,6 +23,7 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --target node20 --clean --out-dir dist --shims",
+    "prepare": "npm run build",
     "dev": "tsup src/index.ts --format esm --target node20 --out-dir dist --shims --watch",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

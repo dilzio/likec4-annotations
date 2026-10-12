@@ -20,8 +20,9 @@ Your job is to run it and present what it already computed.
    that fails, try `npx --yes likec4-agent@<pinned-version-if-known>
    --version`. If neither resolves, tell the user the CLI isn't installed
    in this repo and suggest adding it as a `devDependency` (or a git
-   dependency, per their install method) — do not fall back to parsing
-   annotations yourself.
+   dependency, per their install method, e.g.
+   `pnpm add -D github:dilzio/likec4-annotations#path:packages/cli`) — do
+   not fall back to parsing annotations yourself.
 
 2. **Run the sync.** Execute:
    ```bash
