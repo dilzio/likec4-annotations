@@ -1,25 +1,33 @@
 import { resolve } from "node:path";
-import type { SyncOptions } from "./types.js";
+import type { InitOptions, SyncOptions } from "./types.js";
 
 export interface RawSyncFlags {
-  cwd?: string;
-  modelDir?: string;
+  rootDir?: string;
   include?: string[];
   exclude?: string[];
   format?: string;
   validate?: boolean;
 }
 
+export interface RawInitFlags {
+  rootDir?: string;
+}
+
 export function resolveSyncOptions(flags: RawSyncFlags): SyncOptions {
-  const cwd = resolve(flags.cwd ?? process.cwd());
-  const modelDir = resolve(flags.modelDir ?? `${cwd}/model`);
+  const rootDir = resolve(flags.rootDir ?? process.cwd());
+  const modelDir = `${rootDir}/c4-agent`;
   const format = flags.format === "json" ? "json" : "text";
   return {
-    cwd,
+    rootDir,
     modelDir,
     include: flags.include ?? [],
     exclude: flags.exclude ?? [],
     format,
     validate: flags.validate ?? true,
   };
+}
+
+export function resolveInitOptions(flags: RawInitFlags): InitOptions {
+  const rootDir = resolve(flags.rootDir ?? process.cwd());
+  return { rootDir };
 }

@@ -41,8 +41,8 @@ export class OrdersService {}
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "likec4-agent-sync-"));
-  write("model/specification.c4", SPEC);
-  write("model/manual/external-systems.c4", MANUAL);
+  write("c4-agent/specification.c4", SPEC);
+  write("c4-agent/manual/external-systems.c4", MANUAL);
 });
 
 afterEach(() => {
@@ -52,7 +52,7 @@ afterEach(() => {
 describe("runSync integration", () => {
   it("discovers a new element and relationship on first run", async () => {
     write("src/orders.ts", ORDERS_SOURCE);
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     const { report, exitCode } = await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     expect(exitCode).toBe(0);
@@ -60,13 +60,13 @@ describe("runSync integration", () => {
     expect(report.relationships.added).toHaveLength(1);
     expect(report.write.changed).toBe(true);
 
-    const elementsContent = readFileSync(join(dir, "model/generated/elements.c4"), "utf8");
+    const elementsContent = readFileSync(join(dir, "c4-agent/generated/elements.c4"), "utf8");
     expect(elementsContent).toContain("orders-service = container 'Orders Service'");
   });
 
   it("is idempotent on a second run with no code changes", async () => {
     write("src/orders.ts", ORDERS_SOURCE);
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     await runSync(opts, "2026-01-01T00:00:00.000Z");
     const { report } = await runSync(opts, "2026-01-01T00:00:01.000Z");
 
@@ -79,7 +79,7 @@ describe("runSync integration", () => {
 
   it("flags an orphaned element when its annotation disappears", async () => {
     write("src/orders.ts", ORDERS_SOURCE);
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     write("src/orders.ts", "export class OrdersService {}\n");
@@ -94,7 +94,7 @@ describe("runSync integration", () => {
       "src/orders.ts",
       ORDERS_SOURCE.replace("@likec4 container", "@likec4 coscontainer"),
     );
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     expect(report.elements.new).toHaveLength(0);
@@ -107,7 +107,7 @@ describe("runSync integration", () => {
         context: "element",
       },
     ]);
-    const elementsContent = readFileSync(join(dir, "model/generated/elements.c4"), "utf8");
+    const elementsContent = readFileSync(join(dir, "c4-agent/generated/elements.c4"), "utf8");
     expect(elementsContent).not.toContain("orders-service");
   });
 
@@ -116,7 +116,7 @@ describe("runSync integration", () => {
       "src/orders.ts",
       ORDERS_SOURCE.replace("stripe-api", "nonexistent-service"),
     );
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     expect(report.issues.danglingTargets).toHaveLength(1);
@@ -124,7 +124,7 @@ describe("runSync integration", () => {
     expect(report.relationships.added).toHaveLength(0);
   });
 
-  it("generates model/generated/flows.c4 for a tagged flow and reports it", async () => {
+  it("generates c4-agent/generated/flows.c4 for a tagged flow and reports it", async () => {
     write(
       "src/orders.ts",
       ORDERS_SOURCE.replace(
@@ -132,11 +132,11 @@ describe("runSync integration", () => {
         '@likec4-rel stripe-api "charges the card" flow:"checkout":1 flowTitle:"Checkout Flow"',
       ),
     );
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     expect(report.flows).toEqual([{ id: "checkout", title: "Checkout Flow", stepCount: 1 }]);
-    const flowsContent = readFileSync(join(dir, "model/generated/flows.c4"), "utf8");
+    const flowsContent = readFileSync(join(dir, "c4-agent/generated/flows.c4"), "utf8");
     expect(flowsContent).toContain("dynamic view checkout {");
     expect(flowsContent).toContain("title 'Checkout Flow'");
     expect(flowsContent).toContain("orders-service -> stripe-api 'charges the card'");
@@ -150,11 +150,11 @@ describe("runSync integration", () => {
         '@likec4-rel nonexistent-service "charges the card" flow:"checkout":1',
       ),
     );
-    const opts = resolveSyncOptions({ cwd: dir, validate: false });
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
     const { report } = await runSync(opts, "2026-01-01T00:00:00.000Z");
 
     expect(report.flows).toHaveLength(0);
-    const flowsContent = readFileSync(join(dir, "model/generated/flows.c4"), "utf8");
+    const flowsContent = readFileSync(join(dir, "c4-agent/generated/flows.c4"), "utf8");
     expect(flowsContent).not.toContain("dynamic view");
   });
 });

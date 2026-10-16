@@ -7,8 +7,8 @@ need new fields or kinds, request them upstream rather than hand-editing a
 local copy of this document (there isn't one to edit — this copy ships
 inside `node_modules/likec4-agent/docs/`).
 
-Run `likec4-agent sync` to regenerate `model/generated/elements.c4`,
-`model/generated/relationships.c4`, and `model/generated/flows.c4` from
+Run `likec4-agent sync` to regenerate `c4-agent/generated/elements.c4`,
+`c4-agent/generated/relationships.c4`, and `c4-agent/generated/flows.c4` from
 these tags.
 
 ## Grammar
@@ -18,7 +18,7 @@ these tags.
 @likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>] [flow:"<flowId>":<step>] [flowTitle:"<title>"]
 ```
 
-- `<kind>` must be one declared in your repo's `model/specification.c4`
+- `<kind>` must be one declared in your repo's `c4-agent/specification.c4`
   (e.g. `person`, `softwareSystem`, `container`, `component` — whatever
   your project declares).
 - `<id>` and `<targetId>` follow LikeC4 identifier rules: letters, digits,
@@ -26,7 +26,7 @@ these tags.
 - `<title>` is optional; if omitted, the id is used as the title.
 - `technology:"..."` is optional on both tags.
 - `kind:<relKind>` is optional on `@likec4-rel` and must be a relationship
-  kind declared in `model/specification.c4`. Omit it for a plain
+  kind declared in `c4-agent/specification.c4`. Omit it for a plain
   relationship.
 - `flow:"<flowId>":<step>` is optional on `@likec4-rel` and marks the
   relationship as step `<step>` (an integer) of the named flow `<flowId>`.
@@ -70,7 +70,7 @@ export class OrdersService {
 }
 ```
 
-Generates (in `model/generated/`):
+Generates (in `c4-agent/generated/`):
 
 ```
 model {
@@ -111,7 +111,7 @@ func NewStripeClient() *Client { ... }
 ```
 
 Here `stripe-api` has no annotated code backing it — it would be declared
-by hand in `model/manual/external-systems.c4` as a `softwareSystem` tagged
+by hand in `c4-agent/manual/external-systems.c4` as a `softwareSystem` tagged
 `#external`. `likec4-agent` resolves the relationship target against the
 full model but never writes the element itself.
 
@@ -135,7 +135,7 @@ export class OrdersService {}
 export class PaymentsService {}
 ```
 
-Generates (in `model/generated/flows.c4`):
+Generates (in `c4-agent/generated/flows.c4`):
 
 ```
 views {
@@ -158,13 +158,13 @@ relationship was dropped by the usual resolution rules) produces no
 
 | Path | Owner | Notes |
 |---|---|---|
-| `model/generated/elements.c4` | `likec4-agent sync` | Fully rewritten every run |
-| `model/generated/relationships.c4` | `likec4-agent sync` | Fully rewritten every run |
-| `model/generated/flows.c4` | `likec4-agent sync` | Fully rewritten every run; one `dynamic view` per `flow:` id |
-| `model/manual/**` | You | External systems/actors and relationships with no single owning annotation |
-| `model/views/**` | You | All `view { ... }` definitions |
-| `model/specification.c4` | You | Element/relationship kinds, tags, styles |
+| `c4-agent/generated/elements.c4` | `likec4-agent sync` | Fully rewritten every run |
+| `c4-agent/generated/relationships.c4` | `likec4-agent sync` | Fully rewritten every run |
+| `c4-agent/generated/flows.c4` | `likec4-agent sync` | Fully rewritten every run; one `dynamic view` per `flow:` id |
+| `c4-agent/manual/**` | You | External systems/actors and relationships with no single owning annotation |
+| `c4-agent/views/**` | You | All `view { ... }` definitions |
+| `c4-agent/specification.c4` | You | Element/relationship kinds, tags, styles |
 
-`likec4-agent sync` only ever writes inside `model/generated/**`. It reads
-the rest of `model/**.c4` to resolve relationship target ids and validate
+`likec4-agent sync` only ever writes inside `c4-agent/generated/**`. It reads
+the rest of `c4-agent/**.c4` to resolve relationship target ids and validate
 declared kinds, but never modifies it.
