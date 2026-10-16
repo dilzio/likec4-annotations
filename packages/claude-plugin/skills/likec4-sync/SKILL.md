@@ -7,8 +7,8 @@ metadata:
   version: "2.0"
 ---
 
-Regenerate `<model-dir>/generated/elements.c4` and
-`<model-dir>/generated/relationships.c4` by running the `likec4-agent` CLI,
+Regenerate `c4-agent/generated/elements.c4` and
+`c4-agent/generated/relationships.c4` by running the `likec4-agent` CLI,
 then relay its report to the user. **This skill has no independent parsing
 or resolution judgment of its own** — discovery, parsing, id resolution,
 kind validation, DSL emission, and validation are all handled by the CLI.
@@ -48,7 +48,7 @@ Your job is to run it and present what it already computed.
    - Annotations using an undeclared kind (the CLI already omitted these)
    - Malformed tag lines, if any
    - Whether `likec4 validate` passed
-   - Confirmation that `model/manual/**` and `model/views/**` were not
+   - Confirmation that `c4-agent/manual/**` and `c4-agent/views/**` were not
      touched (the CLI structurally never writes there)
    - Do **not** commit anything — leave the working tree diff for the user
      to review.
@@ -65,9 +65,10 @@ Your job is to run it and present what it already computed.
 
 ## Guardrails
 
-- Never edit `model/generated/**`, `model/manual/**`, `model/views/**`, or
-  `model/specification.c4` directly — the CLI is the only thing that
-  writes `model/generated/**`, and nothing should write the rest.
+- Never edit `c4-agent/generated/**`, `c4-agent/manual/**`,
+  `c4-agent/views/**`, or `c4-agent/specification.c4` directly — the CLI is
+  the only thing that writes `c4-agent/generated/**`, and nothing should
+  write the rest.
 - Don't reimplement what the CLI does. If its output looks wrong, that's a
   CLI bug to report/fix upstream, not something to work around by parsing
   annotations yourself in this skill.

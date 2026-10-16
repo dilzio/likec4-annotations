@@ -16,7 +16,7 @@
              | reads                  | writes (only)
              v                        v
   +--------------------+   +--------------------------+
-  | annotated source    |   | model/generated/*.c4      |
+  | annotated source    |   | c4-agent/generated/*.c4   |
   | @likec4 tags,        |   | elements.c4               |
   | any language         |   | relationships.c4          |
   +--------------------+   +--------------------------+
@@ -30,9 +30,9 @@
 ```
 
 **Key design decision — the write boundary.** The CLI is only ever allowed
-to write inside `<model-dir>/generated/`. It reads `model/manual/`,
-`model/views/`, and `model/specification.c4` to resolve relationship targets
-and check declared kinds, but never modifies them. This is what makes it
+to write inside `c4-agent/generated/`. It reads `c4-agent/manual/`,
+`c4-agent/views/`, and `c4-agent/specification.c4` to resolve relationship
+targets and check declared kinds, but never modifies them. This is what makes it
 safe to re-run: there's no marker-comment parsing or diffing against prior
 output to get wrong, because hand-authored files are categorically outside
 the generator's reach.
@@ -62,5 +62,5 @@ like-c4-agent/
 | `packages/cli` | The `likec4-agent` CLI. See [`docs/cli-reference.md`](cli-reference.md) for flags and the I/O contract. |
 | `packages/cli/docs/likec4-annotations.md` | The tag grammar spec — bundled with the CLI, fixed by version. |
 | `packages/claude-plugin` | The `/likec4-sync` Claude Code command + skill — a thin wrapper with no independent parsing/resolution judgment. See [`docs/claude-plugin.md`](claude-plugin.md) for install instructions. |
-| `demo/` | A worked example with its own `model/specification.c4`, annotated source, and `package.json` depending on `likec4-agent` — proves the pipeline end to end and doubles as this repo's smoke test. |
+| `demo/` | A worked example with its own `c4-agent/specification.c4`, annotated source, and `package.json` depending on `likec4-agent` — proves the pipeline end to end and doubles as this repo's smoke test. |
 | `.claude-plugin/marketplace.json` | Lets this repo be added as a Claude Code plugin source. |

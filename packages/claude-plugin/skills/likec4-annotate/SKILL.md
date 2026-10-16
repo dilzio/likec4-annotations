@@ -11,7 +11,7 @@ Propose and write `@likec4`/`@likec4-rel`/`flow:`/`flowTitle:` tags into a
 previously unannotated (or partially annotated) codebase, through a staged
 workflow with an explicit human checkpoint before each write. **This skill
 never runs `likec4-agent sync` and never edits
-`<model-dir>/generated/**`** — its job ends once tags are written into
+`c4-agent/generated/**`** — its job ends once tags are written into
 source and reported; running sync to turn those tags into DSL is a separate,
 explicit step the user takes afterward (directly, or via `/likec4-sync`).
 
@@ -23,7 +23,7 @@ read it before proposing any tag if you have not already.
 ## Progress manifest
 
 All state for a run lives in a single JSON file at
-`<model-dir>/.annotate/progress.json`, next to the model it is building.
+`c4-agent/.annotate/progress.json`, next to the model it is building.
 This path is structurally excluded from `likec4-agent sync`'s own discovery
 scan (same mechanism that excludes the whole model directory), so it can
 never be mistaken for annotated source.
@@ -84,9 +84,9 @@ Schema (`schemaVersion: 1`):
 ## Stage 0 — Scan and chunk plan
 
 1. Determine the target codebase root (the current working directory unless
-   the user names another) and the model directory (default `model/`,
-   or whatever the user's `likec4-agent` config already uses — check for a
-   `likec4.config.json` or ask if ambiguous).
+   the user names another) and the model directory, which is always
+   `<root>/c4-agent` — not independently configurable. If it doesn't exist
+   yet, tell the user to run `likec4-agent init` first.
 
 2. Scan for source files using the same default exclusions as
    `findAnnotatedFiles.ts` in the CLI: exclude `node_modules/**`, `.git/**`,
@@ -94,11 +94,11 @@ Schema (`schemaVersion: 1`):
    media, `*.lock`), anything matched by the repo's `.gitignore`, and —
    same as `findAnnotatedFiles.ts` always excluding the whole model
    directory from its own scan — the entire model directory itself
-   (`<model-dir>/**`, e.g. `model/**`). The model directory's `.c4` files
-   are read as input in Stage 1/2 (specification, manual, views), never
-   chunked or tagged as source. Every file not excluded by one of these
-   rules must be accounted for somewhere in the chunk plan — the plan is
-   incomplete if any in-scope file is left out.
+   (`c4-agent/**`). The model directory's `.c4` files are read as input in
+   Stage 1/2 (specification, manual, views), never chunked or tagged as
+   source. Every file not excluded by one of these rules must be accounted
+   for somewhere in the chunk plan — the plan is incomplete if any in-scope
+   file is left out.
 
 3. Build an ordered chunk plan: one chunk per directory containing a
    package/service manifest (`package.json`, `pyproject.toml`, `go.mod`, or
@@ -117,7 +117,7 @@ Schema (`schemaVersion: 1`):
    a few representative file paths) and let them merge/split/reorder chunks
    before proceeding — the plan isn't final until the user accepts it.
 
-5. Check for an existing `<model-dir>/.annotate/progress.json`:
+5. Check for an existing `c4-agent/.annotate/progress.json`:
    - **Absent**: start fresh — write a new manifest with the accepted chunk
      plan (`chunks[].status: "pending"`, empty `assignedIds`), empty
      taxonomy (`approved: false`), and `flows.status: "pending"`.
@@ -140,7 +140,7 @@ Schema (`schemaVersion: 1`):
 approved**, and the approved taxonomy must be recorded in the manifest
 before any later checkpoint.
 
-1. Read the target's existing `<model-dir>/specification.c4` if present
+1. Read the target's existing `c4-agent/specification.c4` if present
    (via Read) to find every already-declared element and relationship kind.
 
 2. Skim the chunk plan's files well enough to propose a taxonomy: for each
@@ -193,7 +193,7 @@ Process chunks in the manifest's order, skipping any already `"done"`.
      is approved: an id assigned in this chunk, an id assigned in an
      earlier `"done"` chunk (reuse exactly, per the id-stability rule
      above), or an id that will only ever exist by hand in
-     `model/manual/**` (e.g. an external system) — this skill does not
+     `c4-agent/manual/**` (e.g. an external system) — this skill does not
      require the target element to be tagged yet, only its id to be
      settled.
    - **Forward reference (target lives in a chunk not yet processed):**
@@ -248,7 +248,7 @@ Process chunks in the manifest's order, skipping any already `"done"`.
    any entries still left in `deferredRelationships[]` never matched an
    element anywhere in the plan. Present each to the user directly and ask
    how to resolve it: supply the real target id (e.g. it's actually meant
-   to live in `model/manual/**`), or drop it. Write the resolved line (per
+   to live in `c4-agent/manual/**`), or drop it. Write the resolved line (per
    step 3a) or remove the entry accordingly — `deferredRelationships[]`
    must be empty before Stage 3 begins.
 
@@ -288,7 +288,7 @@ before every forward reference is resolved, would miss or misorder steps.
   Stage 2, or outside the steps of a flow currently being approved in
   Stage 3 — one approval authorizes exactly the writes just presented for
   it, nothing ahead of it.
-- Never write to `<model-dir>/generated/**` — that directory is owned
+- Never write to `c4-agent/generated/**` — that directory is owned
   exclusively by `likec4-agent sync`.
 - Never invoke `likec4-agent sync` (or any `npx likec4-agent` command) from
   this skill — handing off to sync is a separate, explicit step the user

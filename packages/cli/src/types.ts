@@ -33,12 +33,16 @@ export interface SpecificationInfo {
 }
 
 export interface SyncOptions {
-  cwd: string;
+  rootDir: string;
   modelDir: string;
   include: string[];
   exclude: string[];
   format: "json" | "text";
   validate: boolean;
+}
+
+export interface InitOptions {
+  rootDir: string;
 }
 
 export interface SyncReport {

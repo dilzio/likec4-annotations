@@ -114,7 +114,7 @@ export function formatHuman(report: SyncReport): string {
   lines.push("");
 
   lines.push(
-    `**model/manual/** and model/views/** untouched:** ${
+    `**c4-agent/manual/** and c4-agent/views/** untouched:** ${
       report.untouched.manualDirConfirmed && report.untouched.viewsDirConfirmed ? "confirmed" : "could not confirm"
     }`,
   );

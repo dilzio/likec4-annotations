@@ -50,9 +50,10 @@ Optionally, install the Claude Code plugin for `/likec4-sync` and
 /plugin install likec4-agent@likec4-agent-marketplace
 ```
 
-Then, in any repo with a `model/specification.c4`:
+Then, in any repo:
 
 ```bash
+npx likec4-agent init   # scaffolds c4-agent/ with starter spec, view, and manual files
 # annotate your code with @likec4 / @likec4-rel tags (or run /likec4-annotate
 # in Claude Code to bootstrap tags on an unannotated codebase), then:
 npx likec4-agent sync

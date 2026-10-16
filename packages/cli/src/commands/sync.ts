@@ -75,11 +75,11 @@ export async function runSync(
     newFlowsContent !== previousFlowsContent;
 
   const validate = opts.validate
-    ? await runLikeC4Validate(opts.cwd)
+    ? await runLikeC4Validate(opts.rootDir)
     : { ran: false, passed: null };
 
   const report = buildReport({
-    repoRoot: opts.cwd,
+    repoRoot: opts.rootDir,
     modelDir: opts.modelDir,
     filesScanned,
     filesWithAnnotations: annotated.length,
@@ -89,9 +89,9 @@ export async function runSync(
     flowWarnings,
     previousElements,
     previousRelationships,
-    elementsFile: relative(opts.cwd, elementsFile),
-    relationshipsFile: relative(opts.cwd, relationshipsFile),
-    flowsFile: relative(opts.cwd, flowsFile),
+    elementsFile: relative(opts.rootDir, elementsFile),
+    relationshipsFile: relative(opts.rootDir, relationshipsFile),
+    flowsFile: relative(opts.rootDir, flowsFile),
     changed,
     validate,
     manualDirConfirmed: true,

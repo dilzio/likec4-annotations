@@ -12,7 +12,7 @@ const DEFAULT_EXCLUDES = [
 ];
 
 export interface DiscoveryOptions {
-  cwd: string;
+  rootDir: string;
   modelDir: string;
   include: string[];
   exclude: string[];
@@ -28,18 +28,18 @@ export async function findAnnotatedFiles(opts: DiscoveryOptions): Promise<{
   filesScanned: number;
   annotated: DiscoveredFile[];
 }> {
-  const modelDirRelative = relative(opts.cwd, opts.modelDir).split(/[\\/]/).join("/");
+  const modelDirRelative = relative(opts.rootDir, opts.modelDir).split(/[\\/]/).join("/");
   const ignorePatterns = [...DEFAULT_EXCLUDES, `${modelDirRelative}/**`, ...opts.exclude];
 
   const ig = ignore();
-  const gitignorePath = `${opts.cwd}/.gitignore`;
+  const gitignorePath = `${opts.rootDir}/.gitignore`;
   if (existsSync(gitignorePath)) {
     ig.add(readFileSync(gitignorePath, "utf8"));
   }
 
   const patterns = opts.include.length > 0 ? opts.include : ["**/*"];
   const candidates = await fg(patterns, {
-    cwd: opts.cwd,
+    cwd: opts.rootDir,
     dot: false,
     ignore: ignorePatterns,
     onlyFiles: true,
@@ -50,7 +50,7 @@ export async function findAnnotatedFiles(opts: DiscoveryOptions): Promise<{
   const annotated: DiscoveredFile[] = [];
 
   for (const relativePath of filtered) {
-    const absolutePath = `${opts.cwd}/${relativePath}`;
+    const absolutePath = `${opts.rootDir}/${relativePath}`;
     let content: string;
     try {
       content = readFileSync(absolutePath, "utf8");
