@@ -3,6 +3,7 @@ export interface ParsedElement {
   kind: string;
   title: string;
   technology?: string;
+  parent?: string;
   description?: string;
   sourceFile: string;
   sourceLine: number;
@@ -85,6 +86,17 @@ export interface SyncReport {
       sourceFile: string;
       sourceLine: number;
       context: "element" | "relationship";
+    }>;
+    unresolvedParents: Array<{
+      id: string;
+      parent: string;
+      sourceFile: string;
+      sourceLine: number;
+    }>;
+    parentCycles: Array<{
+      ids: string[];
+      sourceFile: string;
+      sourceLine: number;
     }>;
     malformedTags: MalformedTag[];
     flowWarnings: Array<{ flowId: string; message: string }>;

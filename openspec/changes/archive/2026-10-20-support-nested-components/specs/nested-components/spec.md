@@ -24,7 +24,7 @@ existing `technology:` parameter.
 A `parent:<id>` reference SHALL resolve against the same combined id space
 used for relationship target resolution today: other annotated elements
 discovered anywhere in the codebase, and elements declared by hand in
-`model/manual/**`, regardless of which file or discovery order the parent
+`c4-agent/manual/**`, regardless of which file or discovery order the parent
 and child are found in.
 
 #### Scenario: Parent declared in a different file than its child
@@ -35,7 +35,7 @@ and child are found in.
 
 #### Scenario: Parent is a hand-authored element
 - **WHEN** an annotated element declares `parent:<id>` where `<id>` is an
-  element declared by hand in `model/manual/**`
+  element declared by hand in `c4-agent/manual/**`
 - **THEN** `likec4-agent sync` resolves the nesting against that
   hand-authored element without requiring it to be annotated in code
 

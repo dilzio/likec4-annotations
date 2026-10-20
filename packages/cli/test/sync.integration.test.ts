@@ -59,6 +59,8 @@ describe("runSync integration", () => {
     expect(report.elements.new.map((e) => e.id)).toEqual(["orders-service"]);
     expect(report.relationships.added).toHaveLength(1);
     expect(report.write.changed).toBe(true);
+    expect(report.issues.unresolvedParents).toEqual([]);
+    expect(report.issues.parentCycles).toEqual([]);
 
     const elementsContent = readFileSync(join(dir, "c4-agent/generated/elements.c4"), "utf8");
     expect(elementsContent).toContain("orders-service = container 'Orders Service'");
@@ -140,6 +142,145 @@ describe("runSync integration", () => {
     expect(flowsContent).toContain("dynamic view checkout {");
     expect(flowsContent).toContain("title 'Checkout Flow'");
     expect(flowsContent).toContain("orders-service -> stripe-api 'charges the card'");
+  });
+
+  it("resolves nested elements end-to-end: annotated parent, manual parent, unresolved parent, and a cycle", async () => {
+    write(
+      "c4-agent/specification.c4",
+      `specification {
+  element container
+  element softwareSystem
+  element component
+
+  relationship async {
+    line dashed
+  }
+}
+`,
+    );
+    write(
+      "c4-agent/manual/cloud.c4",
+      `model {
+  cloud = softwareSystem 'Cloud' {
+    description 'Hand-authored cloud system.'
+  }
+}
+`,
+    );
+    write(
+      "src/payments.ts",
+      `/**
+ * @likec4 container payments-service "Payments Service"
+ */
+export class PaymentsService {}
+`,
+    );
+    write(
+      "src/payment-validator.ts",
+      `/**
+ * @likec4 component payment-validator "Payment Validator" parent:payments-service
+ */
+export class PaymentValidator {}
+`,
+    );
+    write(
+      "src/cloud-worker.ts",
+      `/**
+ * @likec4 component cloud-worker "Cloud Worker" parent:cloud
+ */
+export class CloudWorker {}
+`,
+    );
+    write(
+      "src/orphan.ts",
+      `/**
+ * @likec4 component orphan-component "Orphan Component" parent:nonexistent-parent
+ */
+export class OrphanComponent {}
+`,
+    );
+    write(
+      "src/cycle-a.ts",
+      `/**
+ * @likec4 container cycle-a "Cycle A" parent:cycle-b
+ */
+export class CycleA {}
+`,
+    );
+    write(
+      "src/cycle-b.ts",
+      `/**
+ * @likec4 container cycle-b "Cycle B" parent:cycle-a
+ */
+export class CycleB {}
+`,
+    );
+
+    const opts = resolveSyncOptions({ rootDir: dir, validate: true });
+    const { report, exitCode } = await runSync(opts, "2026-01-01T00:00:00.000Z");
+
+    const elementsContent = readFileSync(join(dir, "c4-agent/generated/elements.c4"), "utf8");
+
+    // Annotated-parent nesting
+    expect(elementsContent).toContain("extend payments-service {");
+    expect(elementsContent).toContain("payment-validator = component 'Payment Validator'");
+
+    // Manual-parent nesting
+    expect(elementsContent).toContain("extend cloud {");
+    expect(elementsContent).toContain("cloud-worker = component 'Cloud Worker'");
+
+    // Unresolved parent: top-level, reported as an issue
+    expect(elementsContent).toContain("orphan-component = component 'Orphan Component' {");
+    expect(report.issues.unresolvedParents).toEqual([
+      {
+        id: "orphan-component",
+        parent: "nonexistent-parent",
+        sourceFile: "src/orphan.ts",
+        sourceLine: 2,
+      },
+    ]);
+
+    // Cycle: both top-level, reported as a single issue
+    expect(elementsContent).toContain("cycle-a = container 'Cycle A' {");
+    expect(elementsContent).toContain("cycle-b = container 'Cycle B' {");
+    expect(report.issues.parentCycles).toEqual([
+      {
+        ids: ["cycle-a", "cycle-b"],
+        sourceFile: "src/cycle-a.ts",
+        sourceLine: 2,
+      },
+    ]);
+
+    // The generated output validates under the real LikeC4 validator.
+    expect(report.validate.ran).toBe(true);
+    expect(report.validate.passed).toBe(true);
+    expect(exitCode).toBe(0);
+  });
+
+  it("reports no new/added items on a second run when a relationship targets a nested element (regression)", async () => {
+    write(
+      "src/validator.ts",
+      `/**
+ * @likec4 container payment-validator "Payment Validator" parent:stripe-api
+ */
+export class PaymentValidator {}
+`,
+    );
+    write(
+      "src/orders.ts",
+      ORDERS_SOURCE.replace(
+        '@likec4-rel stripe-api "charges the card"',
+        '@likec4-rel payment-validator "double-checks card details"\n * @likec4-rel stripe-api "charges the card"',
+      ),
+    );
+    const opts = resolveSyncOptions({ rootDir: dir, validate: false });
+    await runSync(opts, "2026-01-01T00:00:00.000Z");
+    const { report } = await runSync(opts, "2026-01-01T00:00:01.000Z");
+
+    expect(report.elements.new).toHaveLength(0);
+    expect(report.relationships.added).toHaveLength(0);
+    expect(report.relationships.removed).toHaveLength(0);
+    expect(report.write.changed).toBe(false);
   });
 
   it("drops a flow entirely when its only tagged relationship is excluded upstream", async () => {
