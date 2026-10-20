@@ -15,4 +15,11 @@ model {
     technology 'Node.js, Express'
     description 'Charges customer payment methods via the Stripe API and records the resulting transaction.'
   }
+
+  extend payments-service {
+    payment-validator = component 'Payment Validator' {
+      technology 'TypeScript'
+      description 'Validates card details before a charge is attempted.'
+    }
+  }
 }

@@ -71,4 +71,20 @@ describe("buildFlows", () => {
     expect(warnings).toHaveLength(1);
     expect(warnings[0].message).toContain("conflicting flowTitle");
   });
+
+  it("passes through a fully-qualified path on a flow step's target with no flow-building code changes", () => {
+    // resolve.ts rewrites a relationship's source/target to the nested element's
+    // dotted path before buildFlows ever sees it; buildFlows/emitFlows must do
+    // nothing special to correctly carry that path through to the generated view.
+    const { flows } = buildFlows([
+      rel({
+        flow: "checkout",
+        step: 1,
+        source: "payments-service",
+        target: "payments-service.payment-validator",
+        label: "validates the card",
+      }),
+    ]);
+    expect(flows[0].steps[0].target).toBe("payments-service.payment-validator");
+  });
 });

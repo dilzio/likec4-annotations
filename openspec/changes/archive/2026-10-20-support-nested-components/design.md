@@ -17,7 +17,7 @@ fixtures rather than assumed from memory:
   (`cloud.backend.api`); the bare id (`api`) fails to resolve from outside
   that scope.
 - `packages/cli`'s pipeline is entirely custom: `grammar.ts` is a hand-rolled
-  regex parser, `manualIds.ts` extracts ids from `model/manual/**` with a
+  regex parser, `manualIds.ts` extracts ids from `c4-agent/manual/**` with a
   single-line regex, and `likec4` itself is only a **peer dependency**,
   shelled out to via `child_process` in `runLikeC4Validate.ts` purely for the
   final `validate` step - the CLI never imports LikeC4's own parser/model
@@ -32,7 +32,7 @@ fixtures rather than assumed from memory:
 
 **Goals:**
 - Resolve and validate `parent:` references using the same combined id space
-  (annotated + `model/manual/**`) already used for relationship targets.
+  (annotated + `c4-agent/manual/**`) already used for relationship targets.
 - Emit containment using `extend` blocks so cross-file/cross-chunk nesting
   works without needing a topological sort or single-pass tree assembly.
 - Make fully-qualified-path resolution a single, central step so
@@ -43,7 +43,7 @@ fixtures rather than assumed from memory:
 - Importing LikeC4's own parser/langium APIs as a dependency - the custom
   regex/scan approach is preserved, consistent with the existing CLI design.
 - General-purpose parsing of arbitrary hand-authored LikeC4 syntax in
-  `model/manual/**` (e.g. braces inside string literals or block comments) -
+  `c4-agent/manual/**` (e.g. braces inside string literals or block comments) -
   the manual-id scanner is a best-effort, brace-depth-aware extension of
   today's shallow regex, not a full grammar implementation.
 - Any change to the `flow:`/`flowTitle:` grammar, or to `emit/flows.ts` /
@@ -52,6 +52,24 @@ fixtures rather than assumed from memory:
   documented follow-up there, not part of this change.
 
 ## Decisions
+
+### Element tag's optional params become order-independent, not positionally fixed
+`ELEMENT_TAG_RE` today matches `kind`, `id`, optional `title`, and optional
+`technology:"..."` as a single fixed-order regex - it has never had to
+support two independent optional named params before. Adding `parent:<id>`
+makes the element tag face the same problem `@likec4-rel` already solved:
+strip each optional param out of a remainder string regardless of the order
+they appear in (see `REL_TECH_RE`/`REL_KIND_RE`/`REL_FLOW_RE`/
+`REL_FLOWTITLE_RE` in `grammar.ts`). `@likec4` adopts the same
+remainder-extraction approach for `technology:` and `parent:`, so both can
+appear in either order on the tag line.
+**Why:** consistency with how `@likec4-rel` already parses its own multiple
+optional params, and it doesn't force annotation authors to memorize a
+required param sequence.
+**Alternative considered:** keep the single fixed-order regex and add
+`parent:` as a new trailing optional group after `technology:`. Rejected -
+forces a specific param order with no benefit, and diverges from the pattern
+already established for relationship tags.
 
 ### Resolve parent, then rewrite relationship endpoints to full paths centrally
 `resolve.ts` gains a path-resolution pass: after validating elements and
@@ -105,18 +123,18 @@ hand-authored element's nesting path, not just its bare id. This stays a
 lightweight custom scanner, consistent with `grammar.ts`'s existing approach,
 rather than adopting LikeC4's own parser.
 **Alternative considered:** importing LikeC4's langium-based parser for
-`model/manual/**` to get exact nesting for free. Rejected for this change -
+`c4-agent/manual/**` to get exact nesting for free. Rejected for this change -
 `likec4` is deliberately kept as a peer/shell-out-only dependency
 (`runLikeC4Validate.ts`); pulling its parser in as a hard dependency is a
 bigger architectural shift than this feature needs, and the brace-depth scan
-covers every nesting shape already used in this repo's own `model/manual/**`
+covers every nesting shape already used in this repo's own `c4-agent/manual/**`
 (and the fixtures this change adds alongside it).
 
 ## Risks / Trade-offs
 
-- **Brace-depth scanner mis-parses unusual hand-written `model/manual/**`
+- **Brace-depth scanner mis-parses unusual hand-written `c4-agent/manual/**`
   content** (e.g. a brace inside a block comment) -> Mitigated by scope:
-  `model/manual/**` is small and human-reviewed, and a mis-parse surfaces as
+  `c4-agent/manual/**` is small and human-reviewed, and a mis-parse surfaces as
   a reported dangling-parent/cycle issue rather than silent corruption, the
   same safety net as today's dangling-target handling.
 - **Computing fully-qualified paths requires resolving parents before

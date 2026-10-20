@@ -88,6 +88,28 @@ export function formatHuman(report: SyncReport): string {
   }
   lines.push("");
 
+  lines.push("**Unresolved parent references (element generated top-level instead):**");
+  if (report.issues.unresolvedParents.length === 0) {
+    lines.push("none");
+  } else {
+    for (const p of report.issues.unresolvedParents) {
+      lines.push(
+        `- ${p.id} declares parent:${p.parent}, which is not declared anywhere — ${p.sourceFile}:${p.sourceLine}`,
+      );
+    }
+  }
+  lines.push("");
+
+  lines.push("**Parent cycles (participating elements generated top-level instead):**");
+  if (report.issues.parentCycles.length === 0) {
+    lines.push("none");
+  } else {
+    for (const c of report.issues.parentCycles) {
+      lines.push(`- ${c.ids.join(" -> ")} -> ${c.ids[0]} — ${c.sourceFile}:${c.sourceLine}`);
+    }
+  }
+  lines.push("");
+
   if (report.issues.malformedTags.length > 0) {
     lines.push("**Malformed tag lines (skipped):**");
     for (const m of report.issues.malformedTags) {

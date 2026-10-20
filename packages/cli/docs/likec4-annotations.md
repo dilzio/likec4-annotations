@@ -14,7 +14,7 @@ these tags.
 ## Grammar
 
 ```
-@likec4 <kind> <id> ["<title>"] [technology:"<tech>"]
+@likec4 <kind> <id> ["<title>"] [technology:"<tech>"] [parent:<id>]
 @likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>] [flow:"<flowId>":<step>] [flowTitle:"<title>"]
 ```
 
@@ -24,7 +24,34 @@ these tags.
 - `<id>` and `<targetId>` follow LikeC4 identifier rules: letters, digits,
   hyphens, and underscores; no leading digit, no periods.
 - `<title>` is optional; if omitted, the id is used as the title.
-- `technology:"..."` is optional on both tags.
+- `technology:"..."` and `parent:<id>` are both optional on `@likec4` and
+  independent of each other — either, both (in any order), or neither may
+  appear.
+- `parent:<id>` declares that the annotated element is nested inside the
+  element identified by `<id>`, reflecting real C4 containment (e.g. a
+  `component` nested inside a `container`) instead of a flat list of
+  unrelated elements. `<id>` resolves against the same combined id space
+  used for `@likec4-rel` targets: other annotated elements anywhere in the
+  codebase, and elements declared by hand in `c4-agent/manual/**` — the
+  parent doesn't need to be declared in the same file, or even in annotated
+  code at all.
+  - If `<id>` doesn't resolve to any known element, the annotated element is
+    still generated — at the top level, as if `parent:` were omitted — and
+    the unresolved reference is reported as an issue in the sync report.
+  - If a chain of `parent:` references loops back on itself (e.g. A's parent
+    is B and B's parent is A), every element in the cycle is generated at
+    the top level and the cycle is reported as an issue, rather than
+    failing the sync run.
+  - A relationship whose source or target is a nested element is resolved
+    and emitted using that element's fully-qualified dotted path
+    (`payments-service.payment-validator`) whenever the relationship isn't
+    declared from inside that element's own nesting scope — which, in
+    practice, is every relationship this CLI emits, since
+    `c4-agent/generated/relationships.c4` always declares relationships at
+    the top level of the model, never nested inside another element's
+    block. Note that LikeC4 itself rejects a relationship directly between
+    a parent and its own immediate child (it considers that connection
+    already expressed by the containment).
 - `kind:<relKind>` is optional on `@likec4-rel` and must be a relationship
   kind declared in `c4-agent/specification.c4`. Omit it for a plain
   relationship.
@@ -114,6 +141,70 @@ Here `stripe-api` has no annotated code backing it — it would be declared
 by hand in `c4-agent/manual/external-systems.c4` as a `softwareSystem` tagged
 `#external`. `likec4-agent` resolves the relationship target against the
 full model but never writes the element itself.
+
+### Nested elements (composition) example
+
+Tag an element with `parent:<id>` to nest it inside another element,
+expressing real C4 containment (System -> Container -> Component) instead of
+a flat list of boxes.
+
+```ts
+/**
+ * Charges customer payment methods via the Stripe API.
+ *
+ * @likec4 container payments-service "Payments Service" technology:"Node.js, Express"
+ * @likec4-rel stripe-api "charges card" technology:"HTTPS/REST"
+ */
+export class PaymentsService {}
+
+/**
+ * Validates card details before a charge is attempted.
+ *
+ * @likec4 component payment-validator "Payment Validator" technology:"TypeScript" parent:payments-service
+ */
+export class PaymentValidator {}
+```
+
+Generates (in `c4-agent/generated/elements.c4`), with the nested element
+attached to its parent via an `extend` block rather than literal nested
+braces — so a parent and child discovered independently, in any file or
+order, still attach correctly:
+
+```
+model {
+  payments-service = container 'Payments Service' {
+    technology 'Node.js, Express'
+    description 'Charges customer payment methods via the Stripe API.'
+  }
+
+  extend payments-service {
+    payment-validator = component 'Payment Validator' {
+      technology 'TypeScript'
+      description 'Validates card details before a charge is attempted.'
+    }
+  }
+}
+```
+
+A relationship declared *into* `payment-validator` from outside
+`payments-service` (e.g. from `orders-service`) is emitted using its
+fully-qualified path, since `relationships.c4` always declares relationships
+at the top level:
+
+```
+model {
+  orders-service -> payments-service.payment-validator "double-checks card details" // src/orders-service.ts:7
+}
+```
+
+`parent:<id>` also resolves against a hand-authored element in
+`c4-agent/manual/**` — e.g. `parent:cloud` nests under a `cloud` system
+declared by hand, with no annotated code backing `cloud` itself, the same
+way a dangling-free relationship target can be hand-authored today. A
+`parent:` that doesn't resolve, or that forms a cycle, doesn't drop the
+element or fail the sync — it's generated at the top level instead, and
+reported as an issue (`unresolvedParents` / `parentCycles` in
+`--format json`'s `issues`).
 
 ### Dataflow (dynamic view) example
 

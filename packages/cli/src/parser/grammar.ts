@@ -1,5 +1,5 @@
 export const GRAMMAR_SUMMARY = `
-@likec4 <kind> <id> ["<title>"] [technology:"<tech>"]
+@likec4 <kind> <id> ["<title>"] [technology:"<tech>"] [parent:<id>]
 @likec4-rel <targetId> "<label>" [technology:"<tech>"] [kind:<relKind>] [flow:"<flowId>":<step>] [flowTitle:"<title>"]
 
 See docs/likec4-annotations.md (bundled with this CLI) for the full grammar.
@@ -8,12 +8,13 @@ See docs/likec4-annotations.md (bundled with this CLI) for the full grammar.
 const ID_PATTERN = "[A-Za-z][A-Za-z0-9_-]*";
 const QUOTED = '"(?:[^"\\\\]|\\\\.)*"';
 
-export const ELEMENT_TAG_RE = new RegExp(
+export const ELEMENT_TAG_HEAD_RE = new RegExp(
   `^@likec4\\s+(?<kind>${ID_PATTERN})\\s+(?<id>${ID_PATTERN})` +
     `(?:\\s+"(?<title>(?:[^"\\\\]|\\\\.)*)")?` +
-    `(?:\\s+technology:"(?<tech>(?:[^"\\\\]|\\\\.)*)")?` +
-    `\\s*$`,
+    `\\s*(?<rest>.*)$`,
 );
+
+export const ELEMENT_PARENT_RE = new RegExp(`parent:(${ID_PATTERN})`);
 
 export const REL_TAG_HEAD_RE = new RegExp(
   `^@likec4-rel\\s+(?<targetId>${ID_PATTERN})\\s+"(?<label>(?:[^"\\\\]|\\\\.)*)"\\s*(?<rest>.*)$`,

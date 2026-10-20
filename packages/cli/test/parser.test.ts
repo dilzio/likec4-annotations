@@ -180,4 +180,34 @@ export function noop() {}
     expect(parsed.relationships[0].step).toBeUndefined();
     expect(parsed.relationships[0].flowTitle).toBeUndefined();
   });
+
+  it("populates parent when an element tag declares parent:<id>", () => {
+    const source = `/**
+ * @likec4 component payment-validator "Payment Validator" parent:payments-service technology:"TypeScript"
+ */
+`;
+    const blocks = extractCommentBlocks(source);
+    const parsed = parseCommentBlock(blocks[0], "nested.ts");
+    expect(parsed.malformed).toHaveLength(0);
+    expect(parsed.element?.parent).toBe("payments-service");
+    expect(parsed.element?.technology).toBe("TypeScript");
+  });
+
+  it("leaves parent undefined when an element tag omits parent:", () => {
+    const blocks = extractCommentBlocks(JSDOC_SOURCE);
+    const parsed = parseCommentBlock(blocks[0], "orders-service.ts");
+    expect(parsed.element?.parent).toBeUndefined();
+  });
+
+  it("parses technology: then parent: in either order on the element tag", () => {
+    const source = `/**
+ * @likec4 component payment-validator "Payment Validator" technology:"TypeScript" parent:payments-service
+ */
+`;
+    const blocks = extractCommentBlocks(source);
+    const parsed = parseCommentBlock(blocks[0], "nested.ts");
+    expect(parsed.malformed).toHaveLength(0);
+    expect(parsed.element?.parent).toBe("payments-service");
+    expect(parsed.element?.technology).toBe("TypeScript");
+  });
 });

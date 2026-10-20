@@ -19,8 +19,8 @@ kinds meaningful, and every future feature that assumes real C4 structure
   `<id>`. Independent of, and combinable with, the existing `technology:`
   parameter.
 - `likec4-agent sync` resolves `parent:` against the full known id space
-  (other annotated elements, plus ids declared in `model/manual/**` and
-  `model/specification.c4`), the same cross-file resolution already done for
+  (other annotated elements, plus ids declared in `c4-agent/manual/**` and
+  `c4-agent/specification.c4`), the same cross-file resolution already done for
   relationship targets today.
 - Cycle detection: a parent chain that loops back on itself (A parent of B,
   B parent of A) is rejected the same way a dangling relationship target is
@@ -62,7 +62,7 @@ kinds meaningful, and every future feature that assumes real C4 structure
 - `packages/cli/src/model/resolve.ts` — parent-id resolution against the
   combined declared-id space, plus cycle detection.
 - `packages/cli/src/model/manualIds.ts` — must capture nesting depth / full
-  dotted path for ids declared in `model/manual/**`, not just bare ids, so a
+  dotted path for ids declared in `c4-agent/manual/**`, not just bare ids, so a
   hand-authored element can be a resolvable parent or a cross-scope
   relationship target.
 - `packages/cli/src/emit/elements.ts` — group-by-parent emission using

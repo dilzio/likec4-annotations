@@ -86,6 +86,8 @@ export function buildReport(input: BuildReportInput): SyncReport {
     issues: {
       danglingTargets: resolved.danglingTargets,
       undeclaredKinds: resolved.undeclaredKinds,
+      unresolvedParents: resolved.unresolvedParents,
+      parentCycles: resolved.parentCycles,
       malformedTags: input.malformedTags,
       flowWarnings: input.flowWarnings,
     },

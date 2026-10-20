@@ -43,12 +43,15 @@ export async function runSync(
   const flowsFile = `${generatedDir}/flows.c4`;
 
   const { spec, declaredIds: specDeclaredIds } = readSpecification(specificationPath);
-  const manualDeclaredIds = await readManualIds(manualDir);
+  const manualIdPaths = await readManualIds(manualDir);
 
-  const resolved = resolveModel(elements, relationships, spec, [
-    ...specDeclaredIds,
-    ...manualDeclaredIds,
-  ]);
+  const resolved = resolveModel(
+    elements,
+    relationships,
+    spec,
+    [...specDeclaredIds, ...manualIdPaths.keys()],
+    manualIdPaths,
+  );
 
   const previousElements = readPreviousElements(elementsFile);
   const previousRelationships = readPreviousRelationships(relationshipsFile);

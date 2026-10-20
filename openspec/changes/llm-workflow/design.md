@@ -130,6 +130,16 @@ file count.
   clean working tree (or a dedicated branch) so the generated diff is easy to
   review, consistent with how `likec4-sync` already expects the user to
   review `git diff` themselves.
+- **This skill doesn't propose `parent:` (composition) assignments** -> The
+  `nested-components` capability (`openspec/changes/support-nested-components`)
+  now exists: `@likec4` supports a `parent:<id>` parameter so
+  `likec4-agent sync` can generate real C4 containment (System -> Container ->
+  Component) instead of a flat list. This skill's taxonomy/tagging stages
+  were scoped and implemented before that capability landed, so they still
+  only propose flat elements and relationships. Proposing `parent:`
+  assignments (e.g. inferring that a discovered component lives inside an
+  already-tagged container) is tracked as a follow-up revision to this
+  skill's Stage 1 (tagging) instructions, not part of this change.
 
 ## Migration Plan
 

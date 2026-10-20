@@ -1,7 +1,8 @@
 import type { CommentBlock } from "./commentBlocks.js";
 import type { MalformedTag, ParsedElement, ParsedRelationship } from "../types.js";
 import {
-  ELEMENT_TAG_RE,
+  ELEMENT_PARENT_RE,
+  ELEMENT_TAG_HEAD_RE,
   REL_FLOW_RE,
   REL_FLOWTITLE_RE,
   REL_KIND_RE,
@@ -28,7 +29,7 @@ export function parseCommentBlock(block: CommentBlock, sourceFile: string): Pars
   for (const line of block) {
     if (isElementTagLine(line.text)) {
       seenElementLine = true;
-      const match = ELEMENT_TAG_RE.exec(line.text);
+      const match = ELEMENT_TAG_HEAD_RE.exec(line.text);
       if (!match || !match.groups) {
         malformed.push({ sourceFile, sourceLine: line.lineNumber, rawText: line.text });
         continue;
@@ -37,12 +38,22 @@ export function parseCommentBlock(block: CommentBlock, sourceFile: string): Pars
         // A second @likec4 in the same block is out of grammar scope; ignore it.
         continue;
       }
-      const { kind, id, title, tech } = match.groups;
+      const { kind, id, title, rest } = match.groups;
+      let remainder = rest;
+      const techMatch = REL_TECH_RE.exec(remainder);
+      if (techMatch) remainder = remainder.replace(REL_TECH_RE, "");
+      const parentMatch = ELEMENT_PARENT_RE.exec(remainder);
+      if (parentMatch) remainder = remainder.replace(ELEMENT_PARENT_RE, "");
+      if (remainder.trim().length > 0) {
+        malformed.push({ sourceFile, sourceLine: line.lineNumber, rawText: line.text });
+        continue;
+      }
       element = {
         id,
         kind,
         title: title ? unescapeQuoted(title) : id,
-        technology: tech ? unescapeQuoted(tech) : undefined,
+        technology: techMatch ? unescapeQuoted(techMatch[1]) : undefined,
+        parent: parentMatch ? parentMatch[1] : undefined,
         description: proseLines.join(" ").trim() || undefined,
         sourceFile,
         sourceLine: line.lineNumber,
