@@ -56,6 +56,9 @@ Schema (`schemaVersion: 1`):
       "targetHint": "payments client imported as '../payments/client'"
     }
   ],
+  "compositionPass": {
+    "status": "pending"
+  },
   "flows": {
     "status": "pending"
   }
@@ -78,6 +81,12 @@ Schema (`schemaVersion: 1`):
   `targetHint` describing what the target is believed to be, for matching
   against elements proposed in later chunks. Removed once resolved (written)
   or explicitly dropped.
+- `compositionPass.status`: one of `"pending"`, `"proposed"` (presented, not
+  yet approved), `"done"` (approved `parent:`/fold-back edits written).
+  Absent on a manifest written before this field existed — treat as
+  `"pending"` in that case. Moves `"pending"` → `"proposed"` → `"done"` once,
+  per Stage 2.5 below, and only after every chunk is `"done"` and
+  `deferredRelationships[]` is empty.
 - `flows.status`: `"pending"` until every chunk is `"done"`, then
   `"proposed"`, then `"done"` once approved flows are written.
 
@@ -120,7 +129,8 @@ Schema (`schemaVersion: 1`):
 5. Check for an existing `c4-agent/.annotate/progress.json`:
    - **Absent**: start fresh — write a new manifest with the accepted chunk
      plan (`chunks[].status: "pending"`, empty `assignedIds`), empty
-     taxonomy (`approved: false`), and `flows.status: "pending"`.
+     taxonomy (`approved: false`), `compositionPass.status: "pending"`, and
+     `flows.status: "pending"`.
    - **Present and `schemaVersion` matches (`1`)**: resume. Load its
      taxonomy and chunk statuses/assigned ids verbatim; reconcile against
      the freshly scanned chunk plan (new chunks not in the manifest are
@@ -128,8 +138,11 @@ Schema (`schemaVersion: 1`):
      not re-planned). Skip straight to the first `"pending"` chunk (or
      Stage 1 if the taxonomy isn't approved yet; or the deferred-relationship
      sweep, Stage 2 step 5, if every chunk is `"done"` but
-     `deferredRelationships[]` isn't empty; or Stage 3 if every chunk is
-     `"done"` and `deferredRelationships[]` is empty but flows aren't).
+     `deferredRelationships[]` isn't empty; or Stage 2.5 if every chunk is
+     `"done"`, `deferredRelationships[]` is empty, and
+     `compositionPass.status` isn't `"done"` (absent counts as `"pending"`);
+     or Stage 3 if every chunk is `"done"`, `deferredRelationships[]` is
+     empty, and `compositionPass.status` is `"done"`, but flows aren't).
    - **Present but malformed JSON, or `schemaVersion` doesn't match**: tell
      the user the existing manifest can't be resumed and why, then start
      fresh as above (do not fail/abort the run over a bad manifest).
@@ -150,6 +163,19 @@ before any later checkpoint.
    no existing declared kind can honestly represent — never redeclare or
    duplicate a kind that's already there.
 
+   **`softwareSystem` default.** The proposed taxonomy omits `softwareSystem`
+   as an available kind by default — a single-repo/single-system run has no
+   use for it, since `container`/`component` already cover everything this
+   skill tags. Before presenting the proposal, check `c4-agent/manual/**` for
+   an existing **non-`#external`** `softwareSystem` element: if one is
+   already declared there (signaling this codebase is one of several systems
+   in a shared model), include `softwareSystem` in the proposed taxonomy;
+   otherwise, leave it out entirely. An existing `#external` `softwareSystem`
+   (the established pattern for modeling a third-party dependency, e.g. a
+   payment processor or managed queue) does not count toward this check —
+   it says nothing about whether this codebase itself is part of a
+   multi-system model.
+
 3. Present the proposal as a diff against what already exists: "reusing
    `container`, `component`"; "proposing new kind `datastore`" (with a one-
    line rationale each). Explicitly ask the user to approve or edit it.
@@ -165,10 +191,17 @@ before any later checkpoint.
 
 Process chunks in the manifest's order, skipping any already `"done"`.
 
-1. **Propose elements.** For each architecturally meaningful unit in the
-   chunk (reuse the chunk's already-skimmed structure from Stage 0/1 as a
-   starting point, then go deeper per-file as needed), propose an
-   `@likec4 <kind> <id> ["<title>"] [technology:"<tech>"]` tag:
+1. **Propose elements.** Default to **one element per chunk**: the chunk's
+   package/service root is the architecturally meaningful unit, and a single
+   `@likec4` tag on it represents the whole chunk. Only propose a *second*
+   element for a file/class within the chunk when that sub-part has a
+   grounded relationship of its own — something it alone imports/calls, or
+   is alone imported/called by, that none of its siblings in the chunk
+   share — grounded the same way step 2 below requires for any relationship
+   (an import/require/call-site Read/Grep can confirm, not naming or
+   directory-structure intuition). Propose an
+   `@likec4 <kind> <id> ["<title>"] [technology:"<tech>"]` tag for each
+   element arrived at this way:
    - `<kind>` must already be in the manifest's approved `taxonomy.kinds` —
      never a kind outside that set.
    - `<id>` must be a new, stable identifier the first time it's assigned.
@@ -184,6 +217,18 @@ Process chunks in the manifest's order, skipping any already `"done"`.
    import/require/from statement, a direct call-site reference, or a
    configured client/SDK usage naming the target. Do not propose a
    relationship from naming/prose intuition alone.
+   - **Third-party packages** (code outside the annotated codebase, not
+     itself annotatable) get this handling before anything else below
+     applies: if the package has no externally-observable counterpart (a
+     generic utility/data-structure/formatting library with no "other side"),
+     propose no element and no relationship for it at all. If the package is
+     a client/SDK whose calls cross a real network or process boundary to an
+     external service, propose a relationship to that external service's id
+     (resolved against `c4-agent/manual/**`, same as any other external-system
+     target) — never an element or relationship for the SDK/client package
+     itself. First-party code (inside the annotated codebase) is not subject
+     to this bullet; it follows the one-element-per-chunk default in step 1
+     and the composition test in Stage 2.5.
    - If you cannot find such corroboration for a relationship you still
      believe is architecturally real, propose it anyway but mark it
      inline in the review as low-confidence, e.g. `(inferred from naming
@@ -252,6 +297,88 @@ Process chunks in the manifest's order, skipping any already `"done"`.
    step 3a) or remove the entry accordingly — `deferredRelationships[]`
    must be empty before Stage 3 begins.
 
+## Stage 2.5 — Composition pass
+
+**Do not begin this stage until every chunk's `status` is `"done"` and
+`deferredRelationships[]` is empty** — the same precondition Stage 3 waits
+on, and for the same reason: deciding which elements are exclusively owned
+by another needs the complete accumulated element/relationship graph, which
+isn't available mid-Stage-2. This stage runs exactly once per run, after
+Stage 2 completes and before Stage 3.
+
+1. **Apply the composition test.** Over the complete accumulated set of
+   proposed elements and relationships (every chunk's written
+   `@likec4`/`@likec4-rel` tags), evaluate each element X whose only
+   incoming/outgoing relationship traces to a single other element A (its
+   apparent sole owner):
+   - **Peer (no `parent:`)**: if X is referenced by more than one other
+     element in the complete accumulated model, leave it alone — it stays a
+     peer element related only via `@likec4-rel`.
+   - **Nest (`parent:A`), dropping a now-redundant relationship if present**:
+     otherwise, if X has at least one grounded relationship of its own beyond
+     its relationship to A — something X calls, or something that calls X,
+     other than A — propose `parent:A` for X. Then check whether a direct
+     `@likec4-rel` relationship already exists between X and A (in either
+     direction) in the accumulated model — in practice, the common case,
+     since that relationship is usually what established X's exclusive
+     ownership by A in the first place. If one does, also propose removing
+     that relationship line as part of this same proposal: LikeC4 rejects a
+     direct relationship between a parent and its own child, and the
+     containment `parent:A` already conveys has made the separate edge both
+     redundant and invalid. Do not fall back to leaving X a peer in this
+     case — drop the relationship, keep the nest.
+   - **Fold back (remove X)**: otherwise (X has exactly one relationship,
+     to A, and no relationships of its own), propose folding X back into A:
+     remove X as a separate element rather than proposing `parent:A` for
+     it. This is the common case for a sub-part that was mis-split in Stage
+     2 — exclusivity alone doesn't justify nesting. This applies regardless
+     of whether a direct relationship exists between X and A, since folding
+     removes X (and that relationship) entirely rather than creating any
+     parent-child structure.
+   - **Nesting depth** defaults to one level beyond an element's base chunk
+     element. Only propose a second level of nesting on a candidate that
+     itself independently passes this same composition test against its
+     own proposed parent (i.e. the second-level candidate must itself be
+     exclusively owned and independently related, not nested merely because
+     its parent was nested).
+   - A `parent:` candidate whose proposed parent lies outside the
+     candidate's own chunk requires a stronger evidence bar than an
+     in-chunk relationship: at least one grep-visible (import/call-site)
+     relationship grounding the ownership, never naming or directory
+     proximity alone.
+
+2. **Record composition-pass status.** Once the candidates above are
+   determined, set `compositionPass.status: "proposed"` in the manifest
+   before presenting the checkpoint below.
+
+3. **Present the composition-pass checkpoint.** Show every proposed
+   `parent:` edge, every relationship proposed for removal alongside a
+   `parent:` edge, and every proposed fold-back together, in one review (not
+   one checkpoint per element) — the same batching Stage 3 already uses for
+   flows. For each proposed edge, name the candidate element, its proposed
+   parent (or, for a fold-back, which element it folds into), any
+   relationship line proposed for removal as part of the same edge, and the
+   grounded relationship evidence behind the decision. Ask for explicit
+   approval.
+   - **On approval**: for each approved `parent:A` edge, add `parent:A` to
+     the candidate element's existing `@likec4` tag via Edit, and if that
+     edge included a proposed relationship removal, remove that
+     `@likec4-rel` line via Edit in the same pass. For each approved
+     fold-back, remove the candidate's `@likec4` tag (and any `@likec4-rel`
+     tags that only existed to relate it to its owner) via Edit, folding its
+     role into A. **This checkpoint is explicitly authorized to modify an
+     already-`"done"` chunk's file for exactly the edits it just presented
+     and had approved** — a stated, scoped exception to the Guardrails
+     section's rule against writing outside the chunk currently being
+     approved; it does not authorize any other write to that file. Then set
+     `compositionPass.status: "done"` in the manifest.
+   - **On rejected or edited edges**: do not write that `parent:` value (or
+     its paired relationship removal, or that fold-back's removal) to its
+     source file; incorporate the feedback and re-present before writing
+     anything. `compositionPass.status` stays
+     `"proposed"` until every presented edge has been resolved (approved,
+     edited, or dropped) and the resulting writes are complete.
+
 ## Stage 3 — Flow inference
 
 **Do not begin this stage until every chunk's `status` is `"done"` and
@@ -287,7 +414,11 @@ before every forward reference is resolved, would miss or misorder steps.
 - Never write to any file outside the chunk currently being approved in
   Stage 2, or outside the steps of a flow currently being approved in
   Stage 3 — one approval authorizes exactly the writes just presented for
-  it, nothing ahead of it.
+  it, nothing ahead of it. **Stated exception:** the Stage 2.5
+  composition-pass checkpoint is authorized to modify an already-`"done"`
+  chunk's file, but only for the exact `parent:` additions, paired
+  relationship removals, and fold-back removals it just presented and had
+  approved — nothing else in that file.
 - Never write to `c4-agent/generated/**` — that directory is owned
   exclusively by `likec4-agent sync`.
 - Never invoke `likec4-agent sync` (or any `npx likec4-agent` command) from
