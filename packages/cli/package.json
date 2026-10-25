@@ -1,7 +1,6 @@
 {
   "name": "likec4-agent",
   "version": "0.1.0",
-  "private": true,
   "description": "Deterministic CLI that syncs a LikeC4 architecture model from @likec4 / @likec4-rel code annotations",
   "type": "module",
   "license": "MIT",
@@ -14,7 +13,7 @@
     "node": ">=20"
   },
   "bin": {
-    "likec4-agent": "./dist/index.js"
+    "likec4-agent": "dist/index.js"
   },
   "files": [
     "dist",

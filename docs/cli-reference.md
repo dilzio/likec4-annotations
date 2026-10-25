@@ -7,40 +7,24 @@ with this CLI, not a per-repo editable file).
 
 ## Installing the CLI
 
-Add it to your own project with pnpm's git-subdirectory syntax (this repo
-distributes via git only — nothing is published to npm or any other
-registry):
+Install it from npm:
 
 ```bash
-pnpm add github:dilzio/likec4-annotations#path:packages/cli
+npm install likec4-agent
 ```
 
-**First run fails on purpose — this is expected.** `packages/cli` needs to
-run its `prepare` build script (there's no published registry tarball with
-prebuilt output to install instead), and pnpm v10+ refuses to run any build
-script for a git dependency until it's explicitly allow-listed. The command
-above fails with `ERR_PNPM_GIT_DEP_PREPARE_NOT_ALLOWED` and an error message
-containing a ready-to-paste `allowBuilds` entry, keyed to the exact commit
-pnpm resolved — something like:
+or run it without installing, via `npx`:
 
-```yaml
-# pnpm-workspace.yaml
-allowBuilds:
-  likec4-agent@github.com/dilzio/likec4-annotations/<commit-sha>&path:packages/cli: true
+```bash
+npx likec4-agent --version
 ```
-
-Create (or add to) `pnpm-workspace.yaml` with that line, then re-run the
-same `pnpm add` command — it now succeeds, because the resolved spec is on
-the allowlist.
-
-**This entry is pinned to a commit, not a version.** When this repo's
-`main` moves forward and you run `pnpm update likec4-agent`, pnpm resolves a
-new commit hash and the old `allowBuilds` entry no longer matches — the
-install fails again with the same error, now showing the new hash. Repeat
-the same two-step dance (paste the new entry, re-run) each time you update.
 
 See the root [`README.md`](../README.md) Quickstart for the full install +
 first-run walkthrough.
+
+Want to install the CLI from an exact, unreleased commit instead of the
+latest npm release? See
+[`docs/development.md`](development.md#testing-an-unreleased-commit).
 
 ## Usage
 

@@ -50,17 +50,23 @@ applies to an undeclared element/relationship `kind`.
 ```
 like-c4-agent/
   packages/
-    cli/               likec4-agent — the CLI, distributed via git (not published to npm)
+    cli/               likec4-agent — the CLI, published to npm
     claude-plugin/      Claude Code plugin wrapping the CLI
+      .claude-plugin/
+        plugin.json      The plugin's own name/version/description manifest
   demo/                 Worked example consuming the CLI, not published
   .claude-plugin/
     marketplace.json     This repo as its own Claude Code plugin source
+  .github/
+    workflows/           PR checks, dev build (main), tag-triggered release
 ```
 
 | Path | Purpose |
 |---|---|
-| `packages/cli` | The `likec4-agent` CLI. See [`docs/cli-reference.md`](cli-reference.md) for flags and the I/O contract. |
+| `packages/cli` | The `likec4-agent` CLI, published to npm. See [`docs/cli-reference.md`](cli-reference.md) for flags and the I/O contract. |
 | `packages/cli/docs/likec4-annotations.md` | The tag grammar spec — bundled with the CLI, fixed by version. |
 | `packages/claude-plugin` | The `/likec4-sync` Claude Code command + skill — a thin wrapper with no independent parsing/resolution judgment. See [`docs/claude-plugin.md`](claude-plugin.md) for install instructions. |
+| `packages/claude-plugin/.claude-plugin/plugin.json` | The plugin's own manifest (`name`, `version`, `description`); kept in lockstep with `packages/cli/package.json` and the marketplace entry below. |
 | `demo/` | A worked example with its own `c4-agent/specification.c4`, annotated source, and `package.json` depending on `likec4-agent` — proves the pipeline end to end and doubles as this repo's smoke test. |
-| `.claude-plugin/marketplace.json` | Lets this repo be added as a Claude Code plugin source. |
+| `.claude-plugin/marketplace.json` | Lets this repo be added as a Claude Code plugin source; its plugin entry's `version` tracks the same lockstep version. |
+| `.github/workflows/` | CI: pull-request validation, a CI-only dev build on every merge to `main`, and a tag-triggered release that publishes to npm and creates a GitHub Release. See [`docs/development.md`](development.md) for the release flow. |
