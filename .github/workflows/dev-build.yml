@@ -14,9 +14,9 @@ jobs:
   build-test-typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
@@ -46,7 +46,7 @@ jobs:
           zip -r "../../likec4-agent-${{ steps.dev-version.outputs.version }}.zip" dist
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: likec4-agent-${{ steps.dev-version.outputs.version }}
           path: likec4-agent-${{ steps.dev-version.outputs.version }}.zip
