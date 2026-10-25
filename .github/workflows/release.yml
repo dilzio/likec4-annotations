@@ -47,7 +47,7 @@ jobs:
       - run: npm test --workspace packages/cli
 
       - name: Publish to npm
-        run: npm publish --workspace packages/cli
+        run: npm stage publish  --workspace packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
