@@ -1,0 +1,52 @@
+name: Dev build
+
+# CI validation only. This workflow never publishes to npm and never
+# writes to .claude-plugin/marketplace.json — see
+# specs/ci-release-workflows/spec.md, "Dev build on merge to main never
+# publishes."
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm install
+
+      - run: npm run build --workspace packages/cli
+
+      - run: npm run typecheck --workspace packages/cli
+
+      - run: npm test --workspace packages/cli
+
+      - run: npm run check:versions
+
+      - name: Compute dev-build version
+        id: dev-version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DEV_VERSION="${PACKAGE_VERSION}-dev.${{ github.run_number }}+g${SHORT_SHA}"
+          echo "version=${DEV_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "### Dev build version: \`${DEV_VERSION}\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Package dist
+        run: |
+          cd packages/cli
+          zip -r "../../likec4-agent-${{ steps.dev-version.outputs.version }}.zip" dist
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: likec4-agent-${{ steps.dev-version.outputs.version }}
+          path: likec4-agent-${{ steps.dev-version.outputs.version }}.zip

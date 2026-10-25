@@ -17,9 +17,14 @@ Provides:
 ## Install
 
 ```
-/plugin marketplace add https://github.com/dilzio/likec4-annotations
+/plugin marketplace add dilzio/likec4-annotations
 /plugin install likec4-agent@likec4-agent-marketplace
 ```
 
-Requires the target repo to have `likec4-agent` installed (as a
-`devDependency`, or resolvable via `npx`).
+This resolves the plugin at its most recently released version (see
+`.claude-plugin/plugin.json`). Requires the target repo to have
+`likec4-agent` installed (as a `devDependency`, or resolvable via `npx`).
+
+Want to try the plugin as it exists at an exact, unreleased commit or
+branch instead of the latest release? See
+[`docs/development.md`](development.md#testing-an-unreleased-commit).

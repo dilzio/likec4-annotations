@@ -1,11 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  readFileSync,
+  existsSync,
+  symlinkSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runSync } from "../src/commands/sync.js";
 import { resolveSyncOptions } from "../src/config.js";
 
 let dir: string;
+
+// `likec4` is a devDependency of this workspace package, so npm hoists its
+// bin to the repo root's node_modules/.bin (falling back to this package's
+// own node_modules/.bin if hoisting ever changes). Symlinking it into a
+// test's scratch directory lets runLikeC4Validate's local-bin check
+// succeed, so validation runs the real installed binary directly instead
+// of falling through to `npx` — which would otherwise hit the network on
+// every run and be slow (or flaky) on a cold CI cache.
+function linkLocalLikeC4Bin(targetDir: string) {
+  const candidates = [
+    join(__dirname, "../../../node_modules/.bin"),
+    join(__dirname, "../node_modules/.bin"),
+  ];
+  const realBinDir = candidates.find((candidate) => existsSync(join(candidate, "likec4")));
+  if (!realBinDir) return;
+
+  mkdirSync(join(targetDir, "node_modules"), { recursive: true });
+  symlinkSync(realBinDir, join(targetDir, "node_modules/.bin"), "dir");
+}
 
 function write(relPath: string, content: string) {
   const full = join(dir, relPath);
@@ -145,6 +172,7 @@ describe("runSync integration", () => {
   });
 
   it("resolves nested elements end-to-end: annotated parent, manual parent, unresolved parent, and a cycle", async () => {
+    linkLocalLikeC4Bin(dir);
     write(
       "c4-agent/specification.c4",
       `specification {
@@ -255,7 +283,7 @@ export class CycleB {}
     expect(report.validate.ran).toBe(true);
     expect(report.validate.passed).toBe(true);
     expect(exitCode).toBe(0);
-  });
+  }, 15000);
 
   it("reports no new/added items on a second run when a relationship targets a nested element (regression)", async () => {
     write(

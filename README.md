@@ -5,8 +5,9 @@ Annotate your code with lightweight `@likec4` tags in existing doc comments,
 and **`likec4-agent`** — a deterministic CLI, with a thin Claude Code plugin
 wrapper — reads them to generate and keep a LikeC4 model (and its diagrams)
 in sync with the real code. No build step or CI dependency required; run it
-on demand from the command line or from Claude Code. The CLI is distributed
-from this repo via git (not published to npm or any other registry).
+on demand from the command line or from Claude Code. The CLI is published
+to npm as [`likec4-agent`](https://www.npmjs.com/package/likec4-agent); the
+plugin is distributed via this repo's self-hosted Claude Code marketplace.
 
 ## What it does
 
@@ -30,23 +31,17 @@ and design decisions behind it.
 
 ## Quickstart
 
-Requires Node.js 20+ and [pnpm](https://pnpm.io).
+Requires Node.js 20+.
 
 ```bash
-pnpm add github:dilzio/likec4-annotations#path:packages/cli
+npm install likec4-agent
 ```
-
-This fails on the first run — that's expected. pnpm needs an
-`allowBuilds` entry before it'll run the CLI's build step for a git
-dependency; the error message tells you exactly what to paste into
-`pnpm-workspace.yaml`. Full walkthrough:
-[`docs/cli-reference.md`](docs/cli-reference.md#installing-the-cli).
 
 Optionally, install the Claude Code plugin for `/likec4-sync` and
 `/likec4-annotate`:
 
 ```
-/plugin marketplace add https://github.com/dilzio/likec4-annotations
+/plugin marketplace add dilzio/likec4-annotations
 /plugin install likec4-agent@likec4-agent-marketplace
 ```
 
@@ -59,6 +54,9 @@ npx likec4-agent init   # scaffolds c4-agent/ with starter spec, view, and manua
 npx likec4-agent sync
 npx likec4 start   # live-reloading dev server with interactive diagrams
 ```
+
+Want to try an unreleased commit instead of the latest release? See
+[`docs/development.md`](docs/development.md#testing-an-unreleased-commit).
 
 ## Learn more
 

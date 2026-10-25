@@ -1,0 +1,60 @@
+name: Release
+
+# Triggered only by pushing a vX.Y.Z tag. Never commits or pushes back to
+# main — version bumps happen in a normal reviewed PR before tagging (see
+# design.md, "Release workflow does not write back to main").
+#
+# Requires a repository secret NPM_TOKEN (an npm automation token with
+# publish rights for the `likec4-agent` package) to be configured before
+# this workflow can succeed. See docs/development.md.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm install
+
+      - name: Verify tag matches committed version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          TAG_VERSION="${TAG#v}"
+          PACKAGE_VERSION=$(node -p "require('./packages/cli/package.json').version")
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "Tag ${TAG} does not match packages/cli/package.json version ${PACKAGE_VERSION}" >&2
+            exit 1
+          fi
+          npm run check:versions
+
+      - run: npm run build --workspace packages/cli
+
+      - run: npm run typecheck --workspace packages/cli
+
+      - run: npm test --workspace packages/cli
+
+      - name: Publish to npm
+        run: npm publish --workspace packages/cli
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Validate plugin and marketplace manifests
+        run: npm run check:versions
+
+      - name: Create GitHub Release
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
